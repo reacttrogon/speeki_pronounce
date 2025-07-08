@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pronunciation Practice</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link href="index.css" rel="stylesheet" />
+    <style>
+      .word-display {
+        font-size: 21px;
+        margin-top: 10px;
+        font-weight: 550px;
+        text-decoration: underline;
+        text-underline-offset: 5px;
+        font-family: ObviouslyWide-Medium;
+      }
+      .correct {
+        color: #198754;
+        font-weight: 500;
+      }
+      .incorrect {
+        color: #dc3545;
+        font-weight: 500;
+      }
+      .neutral {
+        color: #212529;
+      }
+      .recording {
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      .score-display {
+        font-size: 1.2rem;
+        margin-top: 20px;
+      }
+      .word-container {
+        min-height: 100px;
+      }
+      .score-chart {
+        height: 10px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        background-color: #e9ecef;
+      }
+      .score-fill {
+        height: 100%;
+        border-radius: 5px;
+        background-color: #0d6efd;
+      }
+      .stats-container {
+        margin-top: 20px;
+      }
+      .stats-label {
+        font-weight: 500;
+      }
+      .recording-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #dc3545;
+        display: inline-block;
+        margin-right: 5px;
+        animation: blink 1s infinite;
+      }
+      @keyframes blink {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      .status-message {
+        font-size: 0.9rem;
+        margin-top: 10px;
+        min-height: 20px;
+      }
+    </style>
+  </head>
+  <body
+    class="w-full h-screen"
+    style="font-family: 'ObviouslyWide-Regular', sans-serif"
+  >
+    <div class="bg-[#a40dee] w-full max-w-[600px] h-screen relative">
+      <!-- first-section-->
+      <div id="section_1"
+        class="h-[45%] bg-cover bg-center relative"
+        style="background-image: url('/assets/Retro baground.png')"
+      >
+        <div class="top_header w-full">
+          <div>
+            <img
+              src="/assets/Speeki-ai-Logo__Original_Transparen-BG_1 2.png"
+              alt="Speeki AI Logo"
+              class="w-[51px] h-[47px] absolute left-1/2 top-[10%] transform -translate-x-1/2"
+            />
+          </div>
+          <div class="word-tracker">
+            <div class="total-words-learned">Total Words Learned</div>
+            <div class="tracker-line"></div>
+            <div class="stats">
+              <div class="today">
+                <div class="label">Today</div>
+                <div class="number">5</div>
+              </div>
+              <div class="lifetime">
+                <div class="label">Life Time</div>
+                <div class="number">45</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- word-section div  -->
+      <div
+        class="card-body w-[330px] h-auto bg-[#FFFFFF] rounded-[12px] absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 drop-shadow-xl"
+      >
+        <div
+          class="word-container flex flex-col items-center text-center mx-[30px]"
+        >
+          <div
+            id="wordDisplay"
+            class="word-display text-center font-[550px] text-[21px]"
+          ></div>
+          <p
+            class="text-center text-[#8B8585] font-medium leading-[20px] text-[13px] tracking-[0%]"
+            style="font-family: 'ObviouslyWide-Regular', sans-serif"
+          >
+            A fact or situation that is observed to exist or happen, especially
+            one whose cause or explanation is in question.
+          </p>
+        </div>
+      </div>
+
+      <!-- feedback container  -->
+      <div
+        id="feedbackContainer"
+        class="d-none h-auto bg-[#FFFFFF] rounded-[12px] absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 shadow-xl p-[18px] "
+      >
+        <div
+          class="shadow-purple-500 rounded-[12px] flex flex-col items-center justify-center"
+        >
+          <div class="">
+            <h5 class="!text-[14px]">Pronunciation Feedback</h5>
+          </div>
+          <div class="tracker-line2"></div>
+
+          <div class="card-body">
+            <div
+              id="recognizedText"
+              class="text-center mb-3 fst-italic text-[30px]"
+              style="font-family: 'ObviouslyWide-Medium', sans-serif"
+            ></div>
+            <div
+              id="pronunciationFeedback"
+              class="word-display text-center"
+            ></div>
+
+            <!-- <div class=" flex items-center justify-center py-2  text-[20px] ">
+              <span class="text-[#1d8258] text-[20px] font-medium">Corrected  &nbsp;</span>   91% 
+            </div> -->
+
+            <hr style="margin: 10px 0px" />
+            <!-- <small class="text-danger"
+              >Following values may be inaccurate.</small
+            > -->
+            <div id="stats-container" class="flex flex-col p-2">
+              <div id="stats-grid" class="grid grid-cols-2 gap-3">
+                <div
+                  id="pronunciation-container"
+                  class="p-2 rounded-lg text-center shadow-sm"
+                >
+               
+                  <div
+                    id="pronunciation-chart-container"
+                    class="score-chart h-16 bg-gray-100 rounded-full mb-2 hidden "
+                  >
+                    <div
+                      id="pronunciationScore"
+                      class="score-fill h-full bg-blue-500 rounded-full"
+                    ></div>
+                    
+                  </div>
+                  <div id="pronunciationScoreText" class="font-bold"></div>
+                  <div
+                    id="pronunciation-label"
+                    class="stats-label !font-bold "
+                  >
+                    Pronunciation
+                  </div>
+                </div>
+
+                <div
+                  id="accuracy-container"
+                  class="p-2 rounded-lg text-center shadow-sm"
+                >
+                  
+                  <div
+                    id="accuracy-chart-container"
+                    class="score-chart h-16 bg-gray-100 rounded-full mb-2 hidden"
+                  >
+                    <div
+                      id="accuracyScore"
+                      class="score-fill h-full bg-blue-500 rounded-full"
+                    ></div>
+                  </div>
+                  <div id="accuracyScoreText" class="font-bold"></div>
+                  <div id="accuracy-label" class="stats-label !font-bold ">
+                    Accuracy
+                  </div>
+                </div>
+
+                <div
+                  id="fluency-container"
+                  class="p-2 rounded-lg text-center shadow-sm"
+                >
+                  
+                  <div
+                    id="fluency-chart-container"
+                    class="score-chart h-16 bg-gray-100 rounded-full mb-2 hidden"
+                  >
+                    <div
+                      id="fluencyScore"
+                      class="score-fill h-full bg-blue-500 rounded-full"
+                    ></div>
+                  </div>
+                  <div id="fluencyScoreText" class="font-bold"></div>
+                  <div id="fluency-label" class="stats-label !font-bold ">
+                    Fluency
+                  </div>
+                </div>
+
+                <div
+                  id="completeness-container"
+                  class="p-2 rounded-lg text-center shadow-sm"
+                >
+                  
+                  <div
+                    id="completeness-chart-container"
+                    class="score-chart h-16 bg-gray-100 rounded-full mb-2 hidden"
+                  >
+                    <div
+                      id="completenessScore"
+                      class="score-fill h-full bg-blue-500 rounded-full"
+                    ></div>
+                  </div>
+                  <div id="completenessScoreText" class="font-bold"></div>
+                  <div
+                    id="completeness-label"
+                    class="stats-label !font-bold "
+                  >
+                    Completeness
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="audioControls" class="audio-controls d-none text-center">
+              <p class="text-[10px] py-2 text-[#8B8585] mb-0">
+                Listen to your recording:
+              </p>
+              <!-- <div class="w-10 h-10 flex items-center justify-center border-[1px] border-[#a40dee] rounded-full">
+                <img src="/assets/speaker-filled-audio-tool.png" alt="" class="w-4 h-4">
+            </div>
+            <div class="w-10 h-10 flex items-center justify-center border-[1px] border-[#a40dee] rounded-full">
+              <img src="/assets/hearing.png" alt="" class="w-4 h-4">
+          </div> -->
+              <audio id="recordedAudio" controls></audio>
+            </div>
+
+            <div class="flex justify-center mt-[14px]">
+              <button
+                id="newWordBtn"
+                class="px-2 py-2 flex justify-center items-center border-1 border-[#a40dee] text-[#a40dee] font-semibold !text-[13px]"
+                style="border-radius: 8px"
+              >
+                Next Word
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- seconad_section  -->
+
+      <div id="section_2" class="h-[55%] relative z-0 flex flex-col justify-bottom">
+        <!-- SVG Curve -->
+        <svg
+          class="absolute top-[-8%] left-0 w-full h-auto z-0"
+          viewBox="0 0 1440 320"
+        >
+          <path
+            fill="white"
+            d="M0,0 C360,150 1080,150 1440,0 L1440,320 L0,320 Z"
+          ></path>
+        </svg>
+
+        <!-- White Background Container -->
+        <div
+          class="bg-white h-full relative z-10 flex items-center justify-end flex flex-col"
+        >
+          <div class="w-full flex justify-center items-center py-8 flex-col">
+            <div
+              id="statusMessage"
+              class="text-center status-message text-muted mb-3 !text-[10px] "
+            ></div>
+            <a
+              id="recordBtn"
+              class="border-0 rounded-full inline-flex items-center justify-center transition-all duration-300 focus:outline-[15px] focus:outline-[rgba(164,13,238,0.2)] active:outline-[20px] active:outline-[rgba(164,13,238,0.2)]"
+              tabindex="0"
+            >
+              <img
+                src="/assets/Frame 1171280364.png"
+                alt=""
+                class="w-16 h-16"
+              />
+            </a>
+          </div>
+
+          <!-- div for putting all id's  -->
+          <div class="hidden">
+            <button id="recordBtn" class="btn btn-danger btn-lg px-4">
+              <span id="recordIcon" class="me-2">🎤</span>
+              <span id="recordText">Record</span>
+            </button>
+
+            <div class="word-container">
+              <div id="wordDisplay" class="word-display text-center"></div>
+            </div>
+            <button id="newWordBtn" class="btn btn-outline-primary">
+              Next Word
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Application JavaScript -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const wordDisplay = document.getElementById("wordDisplay");
+        const recordBtn = document.getElementById("recordBtn");
+        const recordText = document.getElementById("recordText");
+        const recordIcon = document.getElementById("recordIcon");
+        const newWordBtn = document.getElementById("newWordBtn");
+        const feedbackContainer = document.getElementById("feedbackContainer");
+        const pronunciationFeedback = document.getElementById(
+          "pronunciationFeedback"
+        );
+        const recognizedText = document.getElementById("recognizedText");
+        const audioControls = document.getElementById("audioControls");
+        const recordedAudio = document.getElementById("recordedAudio");
+        const statusMessage = document.getElementById("statusMessage");
+
+        // Score elements
+        const pronunciationScoreEl =
+          document.getElementById("pronunciationScore");
+        const accuracyScoreEl = document.getElementById("accuracyScore");
+        const fluencyScoreEl = document.getElementById("fluencyScore");
+        const completenessScoreEl =
+          document.getElementById("completenessScore");
+        const pronunciationScoreText = document.getElementById(
+          "pronunciationScoreText"
+        );
+        const accuracyScoreText = document.getElementById("accuracyScoreText");
+        const fluencyScoreText = document.getElementById("fluencyScoreText");
+        const completenessScoreText = document.getElementById(
+          "completenessScoreText"
+        );
+
+        // Sample word list - this could be loaded from an API
+        const words = [
+          "pronunciation",
+          "development",
+          "interesting",
+          "technology",
+          "communication",
+          "environment",
+          "opportunity",
+          "understand",
+          "experience",
+          "important",
+          "necessary",
+          "different",
+          "beautiful",
+          "government",
+          "knowledge",
+          "schedule",
+          "temperature",
+          "university",
+          "laboratory",
+          "comfortable",
+          "Photography",
+          "Vegetable",
+          "Comfortable",
+          "Chocolate",
+          "Wednesday",
+          "Lizard",
+          "Breakfast",
+          "Development",
+          "February",
+          "Interesting",
+          "Library",
+          "Family",
+          "Secretary",
+          "Margarine",
+          "Cemetery",
+          "Committee",
+          "Omelette",
+          "Comfortable",
+          "Opera",
+          "Appreciate",
+          "Advertisement",
+          "Ballet",
+          "Broccoli",
+          "Determine",
+          "Penalty",
+          "Swimming pool",
+          "Service",
+          "Award",
+          "Infinite",
+          "Enthusiasm",
+          "Nine",
+          "Miracle",
+          "Atmosphere",
+          "Pastel",
+          "Psychiatrist",
+          "Plumber",
+          "Divorce",
+          "Opportunity",
+          "Management",
+          "Finance",
+          "Obstacle",
+          "Industry",
+          "Executive",
+          "Delicious",
+          "Love",
+          "Comfort",
+          "License",
+          "Forgive",
+          "Queen",
+          "Quiz",
+          "Bowl",
+          "Pollution",
+          "Forgive",
+          "Against",
+          "Again",
+          "Eyebrow",
+          "Menu",
+          "Uber",
+          "Botox",
+          "Aisle",
+          "Emerald",
+          "Image",
+          "Desperate",
+          "Content",
+          "Divorce",
+          "Opportunity",
+          "Management",
+          "Finance",
+          "Towel",
+          "Premises",
+          "Dilemma",
+          "Hazard",
+          "Pandemic",
+          "Resides",
+          "Mannequin",
+          "Delicious",
+          "Government",
+          "Menu",
+          "Uber",
+          "Stove",
+          "Young",
+          "Tailor",
+          "Target",
+          "Botox",
+          "License",
+          "Algorithm",
+          "Executive",
+          "Niche",
+          "Mischievous",
+          "Therapy",
+          "Content",
+          "Dilemma",
+          "Quick",
+          "Executive",
+          "Mannequin",
+          "Delicious",
+          "Architect",
+          "Forgive",
+          "Relative",
+          "Toward",
+          "Suit",
+          "Queer",
+          "Quickly",
+          "February",
+          "Tuesday",
+          "Clothes",
+          "Onion",
+          "Debt",
+          "Oven",
+          "Coupon",
+          "Salmon",
+          "Listen",
+          "Vehicle",
+          "Debt",
+          "Sword",
+          "Receipt",
+          "Island",
+          "Debris",
+          "Rendezvous",
+          "Etc.",
+          "Subtle",
+          "Cupboard",
+          "Genre",
+          "Almond",
+          "Colonel",
+          "Cucumber",
+          "Woman",
+          "Women",
+          "Gauge",
+          "Chaos",
+          "Mojito",
+          "Salad",
+          "Password",
+        ];
+
+        let currentWord = "";
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let audioBlob = null;
+        let audioUrl = null;
+
+        // Set a random word initially
+        setRandomWord();
+
+        newWordBtn.addEventListener("click", setRandomWord);
+
+        // Set a random word from the list
+        function setRandomWord() {
+          currentWord = words[Math.floor(Math.random() * words.length)];
+          wordDisplay.innerHTML = "";
+
+          // Create neutral spans for each letter
+          for (let i = 0; i < currentWord.length; i++) {
+            const span = document.createElement("span");
+            span.textContent = currentWord[i];
+            span.className = "neutral";
+            wordDisplay.appendChild(span);
+          }
+
+          // Hide feedback when getting a new word
+          document.getElementById("section_1").classList.remove("blur-sm");
+          // document.getElementById("section_2").classList.remove("blur-sm");
+          feedbackContainer.classList.add("d-none");
+          statusMessage.textContent = "";
+          document.getElementById("recordBtn").classList.remove("d-none");
+
+          // Reset audio
+          if (audioUrl) {
+            URL.revokeObjectURL(audioUrl);
+            audioUrl = null;
+          }
+          audioBlob = null;
+          audioControls.classList.add("d-none");
+        }
+
+        // Record button functionality
+        recordBtn.addEventListener("click", toggleRecording);
+
+        async function toggleRecording() {
+          if (!isRecording) {
+            try {
+              // Update status
+              statusMessage.textContent = "Requesting microphone access..."; 
+              
+
+              // Request microphone access with optimal settings for Azure
+              const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                  channelCount: 1, // Mono
+                  sampleRate: 16000, // 16 kHz - Azure preferred
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                },
+              });
+
+              statusMessage.textContent = "Recording... Speak clearly.";
+
+              // Use a MIME type that works well with Azure
+              // WebM with Opus codec is widely supported and works well
+              let mimeType = "audio/webm;codecs=opus";
+
+              if (!MediaRecorder.isTypeSupported(mimeType)) {
+                // Fallback options
+                const options = [
+                  "audio/webm",
+                  "audio/mp4",
+                  "audio/ogg;codecs=opus",
+                ];
+
+                for (const type of options) {
+                  if (MediaRecorder.isTypeSupported(type)) {
+                    mimeType = type;
+                    console.log(`Using fallback MIME type: ${mimeType}`);
+                    break;
+                  }
+                }
+              }
+
+              console.log(`Recording with MIME type: ${mimeType}`);
+
+              const options = {
+                mimeType: mimeType,
+                audioBitsPerSecond: 16000, // Lower bit rate for speech
+              };
+
+              mediaRecorder = new MediaRecorder(stream, options);
+              audioChunks = [];
+
+              mediaRecorder.addEventListener("dataavailable", (event) => {
+                if (event.data.size > 0) {
+                  audioChunks.push(event.data);
+                }
+              });
+
+              mediaRecorder.addEventListener("stop", () => {
+                // Update status
+                statusMessage.textContent = "Recording stopped. Processing...";
+
+                // Create a blob from the audio chunks
+                audioBlob = new Blob(audioChunks, { type: mimeType });
+                console.log(
+                  `Recording completed. Size: ${audioBlob.size} bytes, Type: ${audioBlob.type}`
+                );
+
+                // Set up the audio player
+                audioUrl = URL.createObjectURL(audioBlob);
+                recordedAudio.src = audioUrl;
+                audioControls.classList.remove("d-none");
+
+                // Send the audio to the server
+                sendAudioToServer();
+              });
+
+              // Start recording with 500ms timeslice for more frequent dataavailable events
+              mediaRecorder.start(500);
+              isRecording = true;
+
+              // Update UI
+              recordBtn.classList.add("recording");
+              recordText.textContent = "Stop";
+              recordIcon.textContent = "⏹️";
+            } catch (err) {
+              console.error("Error accessing microphone:", err);
+              statusMessage.textContent = "Error: Microphone access denied.";
+              alert(
+                "Please allow microphone access to use the recording feature."
+              );
+            }
+          } else {
+            // Stop recording
+            mediaRecorder.stop();
+            isRecording = false;
+
+            // Update UI
+            recordBtn.classList.remove("recording");
+            recordText.textContent = "Record";
+            recordIcon.textContent = "🎤";
+
+            // Close audio tracks
+            mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+          }
+        }
+
+        function sendAudioToServer() {
+          // Create a FormData object to send the audio file
+          const formData = new FormData();
+
+          // Create a file with explicit extension
+          const fileName = `recording.webm`;
+          const file = new File([audioBlob], fileName, {
+            type: audioBlob.type,
+          });
+
+          formData.append("audio", file);
+          formData.append("word", currentWord);
+
+          console.log(`Sending audio file: ${fileName}`);
+          console.log(`File type: ${audioBlob.type}`);
+          console.log(`File size: ${audioBlob.size} bytes`);
+
+          // Show loading state
+          recordBtn.disabled = true;
+          statusMessage.textContent = "Analyzing pronunciation...";
+
+          // Send the audio to the server for processing
+          fetch("/api/assess-pronunciation", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.text().then((text) => {
+                  throw new Error(
+                    `Server returned ${response.status}: ${text}`
+                  );
+                });
+              }
+              return response.json();
+            })
+            .then((data) => {
+              console.log("Pronunciation assessment result:", data);
+              displayFeedback(data);
+              recordBtn.disabled = false;
+              statusMessage.textContent = "Assessment complete.";
+            })
+            .catch((error) => {
+              console.error("Error sending audio:", error);
+              statusMessage.textContent = "Error analyzing pronunciation.";
+              alert(`Error processing audio: ${error.message}`);
+              recordBtn.disabled = false;
+            });
+        }
+
+        // console.log("thsi is fk  kdf ", FormData);
+
+        function displayFeedback(data) {
+          // Show the feedback container
+          feedbackContainer.classList.remove("d-none");
+          document.getElementById("section_1").classList.add("blur-sm");
+          // document.getElementById("section_2").classList.add("blur-sm");
+          document.getElementById("recordBtn").classList.add("d-none"); 
+
+          // Show recognized text if available
+          if (data.recognizedText) {
+            recognizedText.textContent = `Recognized: "${data.recognizedText}"`;
+            recognizedText.classList.remove("d-none");
+          } else {
+            recognizedText.classList.add("d-none");
+          }
+
+          // Clear previous feedback
+          pronunciationFeedback.innerHTML = "";
+
+          // Create spans for each letter with feedback color
+          const phonemes = data.phonemes;
+          const word = data.word;
+
+          for (let i = 0; i < word.length; i++) {
+            const span = document.createElement("span");
+            span.textContent = word[i];
+
+            // Find phoneme that corresponds to this letter
+            const matchingPhoneme = phonemes.find(
+              (p) => p.letterPosition === i
+            );
+
+            if (matchingPhoneme) {
+              // Accuracy threshold for "correct" pronunciation (adjust as needed)
+              span.className =
+                matchingPhoneme.accuracyScore >= 65 ? "correct" : "incorrect";
+            } else {
+              span.className = "neutral";
+            }
+
+            pronunciationFeedback.appendChild(span);
+          }
+
+          // Update score displays
+          updateScoreDisplay(
+            pronunciationScoreEl,
+            pronunciationScoreText,
+            data.pronunciationScore
+          );
+          updateScoreDisplay(
+            accuracyScoreEl,
+            accuracyScoreText,
+            data.accuracyScore
+          );
+          updateScoreDisplay(
+            fluencyScoreEl,
+            fluencyScoreText,
+            data.fluencyScore
+          );
+          updateScoreDisplay(
+            completenessScoreEl,
+            completenessScoreText,
+            data.completenessScore
+          );
+        }
+
+        function updateScoreDisplay(barElement, textElement, score) {
+          // Default to 0 if score is not provided
+          const safeScore = score || 0;
+
+          // Update the score bar width
+          barElement.style.width = `${safeScore}%`;
+
+          // Update the score text
+          textElement.textContent = `${Math.round(safeScore)}%`;
+
+          // Change color based on score
+          if (safeScore >= 60) {
+            barElement.style.backgroundColor = "#198754"; // green
+          } else if (safeScore >= 40) {
+            barElement.style.backgroundColor = "#ffc107"; // yellow
+          } else {
+            barElement.style.backgroundColor = "#dc3545"; // red
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

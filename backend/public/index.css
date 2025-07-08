@@ -1,0 +1,103 @@
+@font-face {
+  font-family: "ObviouslyWide-Regular";
+  src: url("./fonts/Obviously-Regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "ObviouslyWide-Medium";
+  src: url("./fonts/Obviously-Medium.otf") format("opentype");
+  font-weight: 500; /* Medium weight is typically 500 */
+  font-style: normal;
+}
+
+.container {
+  background-color: #a40dee;
+  height: 100vh;
+  width: 100%;
+  /* padding-top: 60px;  */
+  overflow: hidden;
+  /* position: relative; */
+  margin: 0px;
+}
+
+.bg_div {
+  /* background-image: url("/public/"); */
+  /* color: red; */
+  /* position:absolute; */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 300px;
+}
+
+.top_header {
+  width: calc(100% - 42px); /* 100% minus left and right margins */
+  margin: 0 21px; /* 21px margin on both sides */
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding-top: 70px;
+}
+
+.word-tracker {
+  background-color: rgb(200, 116, 242);
+  width: 100%;
+  border-radius: 6px;
+  text-align: center;
+  padding: 15px 36px;
+}
+
+.total-words-learned {
+  color: #ffffff;
+  display: inline-block;
+  border-radius: 5px;
+  font-weight: 540px;
+  font-size: 15px;
+}
+
+.tracker-line {
+  border-top: 2px dashed rgba(255, 255, 255, 0.97);
+  margin: 15px 0;
+}
+
+.tracker-line2 {
+  border-top: 2px dashed rgba(196, 88, 239, 0.97);
+  width: 90%;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  color: white;
+  font-weight: 540px;
+}
+
+.stats .label {
+  opacity: 1;
+  color: #ffffff;
+  font-size: 13px !important;
+}
+
+.stats .number {
+  font-weight: 540px;
+  color: #fee269;
+  font-size: 14px;
+}
+.today {
+  display: flex;
+  gap: 9px;
+}
+.lifetime {
+  display: flex;
+  gap: 9px;
+}
+
+.main_body {
+  background-color: red;
+}
+
+.stats-label {
+  font-size: 10px;
+  font-weight: 600;
+}
