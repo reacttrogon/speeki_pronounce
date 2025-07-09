@@ -8,7 +8,7 @@ const Feedback = () => {
   const handlePlayAudio = () => {
     if (assessmentResult.audioUrl) {
       const audio = new Audio(
-        `http://localhost:3000${assessmentResult.audioUrl}`
+        `speeki-pronounce-xj252.ondigitalocean.app${assessmentResult.audioUrl}`
       );
       audio.play();
     } else {

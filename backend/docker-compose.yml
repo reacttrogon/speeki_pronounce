@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: speeki-backend
+    ports:
+      - "8080:3000"  # Maps host port 8080 to container port 3000
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Azure Speech Service credentials
+      - AZURE_SPEECH_KEY=${AZURE_SPEECH_KEY}
+      - AZURE_SPEECH_REGION=${AZURE_SPEECH_REGION}
+      # Add your MongoDB URI if using MongoDB
+      - MONGODB_URI=${MONGODB_URI}
+    volumes:
+      # Persist uploaded audio files
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
