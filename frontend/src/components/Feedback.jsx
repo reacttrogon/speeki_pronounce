@@ -94,13 +94,12 @@ const Feedback = () => {
       {/* Score Box */}
       <div className="mt-4 bg-[#FFF5E5] rounded-md px-4 py-2 text-center border border-yellow-300">
         <p className="text-[16px] font-semibold text-green-700">
-          <span role="img" aria-label="smile">
+          {/* <span role="img" aria-label="smile">
             😃
-          </span>
+          </span> */}
 
           <span className="font-bold text-black">
-            {}
-            Accuracy : {avgScore?.toFixed(2)}%
+            Accuracy : {Math.round(avgScore)}%
           </span>
         </p>
         <p className="mt-1 text-xs text-gray-600">
@@ -124,7 +123,7 @@ const Feedback = () => {
             className="flex justify-between text-center rounded-md "
           >
             <p className="font-medium text-gray-800">{item.label}</p>
-            <p className="font-bold text-yellow-500 ">{item.value}</p>
+            <p className="font-bold text-yellow-500 ">{item.value}%</p>
           </div>
         ))}
       </div>
