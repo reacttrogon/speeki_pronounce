@@ -33,6 +33,7 @@ const corsOptions = {
     "http://localhost:3001", // Alternative React port
     "http://127.0.0.1:5173", // Alternative localhost format
     "https://your-production-domain.com", // Add your production domain
+    "http://localhost:4173"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
