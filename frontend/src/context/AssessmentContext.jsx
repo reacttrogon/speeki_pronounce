@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 
 export const AssessmentContext = createContext();
 
@@ -159,17 +159,32 @@ const words = [
 ];
 
 export const AssessmentProvider = ({ children }) => {
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const getInitialIndex = () => {
+    const storedIndex = localStorage.getItem("currentWordIndex");
+    return storedIndex !== null ? parseInt(storedIndex, 10) : 0;
+  };
+
+  const [currentWordIndex, setCurrentWordIndex] = useState(getInitialIndex);
+  const [currentWord, setCurrentWord] = useState(words[getInitialIndex()]);
+
   const [assessmentResult, setAssessmentResult] = useState(null);
-  const [currentWord, setCurrentWord] = useState(words[1]);
   const [statusMessage, setStatusMessage] = useState("");
 
-  const nextWord = () => {
-    const nextIndex = (currentWordIndex + 1) % words.length;
-    setCurrentWordIndex(nextIndex);
-    setAssessmentResult(null); 
-    setCurrentWord(words[currentWordIndex])
-  };
+  const storedIndex = localStorage.getItem("currentWordIndex");
+  
+
+useEffect(() => {
+  localStorage.setItem("currentWordIndex", currentWordIndex);
+  setCurrentWord(words[currentWordIndex]);
+}, [currentWordIndex]);
+
+
+ const nextWord = () => {
+  const nextIndex = (currentWordIndex + 1) % words.length;
+  setCurrentWordIndex(nextIndex);
+  setAssessmentResult(null);
+};
+
 
   return (
     <AssessmentContext.Provider
@@ -178,10 +193,10 @@ export const AssessmentProvider = ({ children }) => {
         currentWordIndex,
         assessmentResult,
         setAssessmentResult,
-        nextWord, 
+        nextWord,
         currentWord,
         setStatusMessage,
-        statusMessage
+        statusMessage,
       }}
     >
       {children}
