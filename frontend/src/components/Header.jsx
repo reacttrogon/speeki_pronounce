@@ -5,7 +5,7 @@ const Header = ({ today = 5, lifetime = 45 }) => {
     <div className="relative w-[calc(100%-42px)] mx-[21px] flex flex-col items-center pt-[70px] text-white  ">
       {/* Logo */}
       <img
-        src="/images/Speeki-ai-Logo__Original_Transparen.png"
+        src="./images/Speeki-ai-Logo__Original_Transparen.png"
         alt="Speeki AI brand logo"
         className="w-[51px] h-[47px] absolute top-[24%] left-1/2 transform -translate-x-1/2 z-10"
       />

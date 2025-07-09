@@ -78,7 +78,7 @@ const Feedback = () => {
       {/* Audio Controls */}
       <div className="flex items-center justify-center gap-4 mt-2">
         <img
-          src="/images/speaker-filled-audio-tool.png"
+          src="./images/speaker-filled-audio-tool.png"
           alt="Play Audio"
           className="w-6 h-6 cursor-pointer"
           onClick={handlePlayAudio}

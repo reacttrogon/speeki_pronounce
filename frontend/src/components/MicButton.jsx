@@ -107,7 +107,7 @@ const MicButton = ({ onAssessmentComplete }) => {
           }`}
           tabIndex={0}
         >
-          <img src="/images/mic.png" alt="Mic Button" className="w-16 h-16" />
+          <img src="./images/mic.png" alt="Mic Button" className="w-16 h-16" />
         </button>
       </div>
     </div>
