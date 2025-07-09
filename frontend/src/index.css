@@ -7,15 +7,20 @@
 
 @font-face {
   font-family: "ObviouslyWide-Regular";
-  src: url("./fonts/Obviously-Regular.otf") format("opentype");
-  font-weight: normal;
+  src: url("/assets/fonts/Obviously-Regular.woff2") format("woff2"),
+    url("/assets/fonts/Obviously-Regular.woff") format("woff");
+  font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
+
 @font-face {
   font-family: "ObviouslyWide-Medium";
-  src: url("./fonts/Obviously-Medium.otf") format("opentype");
-  font-weight: 500; /* Medium weight is typically 500 */
+  src: url("/assets/fonts/Obviously-Medium.woff2") format("woff2"),
+    url("/assets/fonts/Obviously-Medium.woff") format("woff");
+  font-weight: 500;
   font-style: normal;
+  font-display: swap;
 }
 
 body {
