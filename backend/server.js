@@ -26,15 +26,29 @@ dotenv.config();
 // );
 
 const app = express();
+// const corsOptions = {
+//   origin: [
+//     "http://localhost:3000", // Backend itself
+//     "http://localhost:5173", // Vite React frontend
+//     "http://localhost:3001", // Alternative React port
+//     "http://127.0.0.1:5173", // Alternative localhost format
+//     "https://your-production-domain.com", // Add your production domain
+//     "http://localhost:4173"
+//   ],
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: [
+//     "Content-Type",
+//     "Authorization",
+//     "X-Requested-With",
+//     "Accept",
+//     "Origin",
+//   ],
+//   credentials: true, // Allow cookies/auth headers
+//   optionsSuccessStatus: 200, // For legacy browser support
+// };
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3000", // Backend itself
-    "http://localhost:5173", // Vite React frontend
-    "http://localhost:3001", // Alternative React port
-    "http://127.0.0.1:5173", // Alternative localhost format
-    "https://your-production-domain.com", // Add your production domain
-    "http://localhost:4173"
-  ],
+  origin: "*", // Allow all origins
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -43,8 +57,8 @@ const corsOptions = {
     "Accept",
     "Origin",
   ],
-  credentials: true, // Allow cookies/auth headers
-  optionsSuccessStatus: 200, // For legacy browser support
+  credentials: false, // Credentials can't be used with '*'
+  optionsSuccessStatus: 200,
 };
 
 // Apply CORS middleware FIRST
@@ -899,7 +913,10 @@ app.post(
         );
 
         console.log("Enhanced assessment result:", assessmentResult);
-        console.log("Enhanced assessment result:", assessmentResult.recognizedText);
+        console.log(
+          "Enhanced assessment result:",
+          assessmentResult.recognizedText
+        );
 
         // Return the enhanced assessment results
         res.json(assessmentResult);
