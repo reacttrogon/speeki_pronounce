@@ -22,7 +22,7 @@ const Header = ({ today = 5, lifetime = 45 }) => {
         {/* Stats Row */}
         <div className="flex justify-around text-sm font-medium text-yellow-400 ">
           <div className="flex items-center justify-center gap-2">
-            <p className="text-base text-white">Today</p>
+            <p className="text-base text-white">Overall</p>
             <p className="text-base">{today}</p>
           </div>
           <div className="flex items-center justify-center gap-2">

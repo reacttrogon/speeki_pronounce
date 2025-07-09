@@ -9,11 +9,17 @@ const MicButton = ({ onAssessmentComplete }) => {
   // const [statusMessage, setStatusMessage] = useState("");
   const [responseData, setResponseData] = useState(false);
   const mediaRecorderRef = useRef(null);
-  const audioChunks = useRef([]);  
+  const audioChunks = useRef([]);
 
-  const { setAssessmentResult, currentWord ,assessmentResult,setStatusMessage,statusMessage} = useContext(AssessmentContext);
-  const wordToAssess = currentWord; 
- 
+  const {
+    setAssessmentResult,
+    currentWord,
+    assessmentResult,
+    setStatusMessage,
+    statusMessage,
+  } = useContext(AssessmentContext);
+  const wordToAssess = currentWord;
+
   const handleRecordClick = async () => {
     if (!recording) {
       try {
@@ -52,8 +58,6 @@ const MicButton = ({ onAssessmentComplete }) => {
               formData
             );
 
-            console.log("Pronunciation Result:", response.data);
-
             setResponseData(response.data); // optional if you want to show result later
             setAssessmentResult(response.data);
             setStatusMessage("✅ Assessment Complete!");
@@ -83,9 +87,9 @@ const MicButton = ({ onAssessmentComplete }) => {
         setRecording(false);
       }
     }
-  }; 
-  
-  if(assessmentResult) return null 
+  };
+
+  if (assessmentResult) return null;
 
   return (
     <div className={`relative z-10 flex flex-col justify-center w-full mt-6 `}>

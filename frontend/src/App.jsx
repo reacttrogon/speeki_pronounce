@@ -11,6 +11,9 @@ function App() {
 
   const isBlur = assessmentResult !== null && assessmentResult !== undefined;
 
+  const storedIndex = localStorage.getItem("currentWordIndex");
+  const numericIndex = storedIndex !== null ? parseInt(storedIndex, 10) : 0;
+
   return (
     <div className="flex items-center justify-center w-full min-h-screen bg-black font-obviously-medium">
       <div className="min-h-screen bg-[#a40dee] to-white flex flex-col items-center max-w-[600px] w-full relative ">
@@ -20,11 +23,11 @@ function App() {
             isBlur ? "blur-sm" : ""
           }`}
         >
-          <Header today={5} lifetime={45} />
+          <Header today={numericIndex + 1} lifetime={100} />
         </div>
 
         <WordCard
-          word="Phenomenon"
+          word=""
           definition="A fact or situation that is observed to exist or happen, especially one whose cause or explanation is in question."
           tries={2}
         />
