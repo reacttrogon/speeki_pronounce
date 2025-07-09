@@ -25,8 +25,8 @@ const Feedback = () => {
       <div style={{ fontSize: "24px", fontFamily: "Arial" }}>
         {word.split("").map((letter, index) => {
           const result = results.find((p) => p.letterPosition === index);
-          const color = result?.status === "Correct" ? "green" : "#C03535";
-          console.log("results", results);
+          const color = result?.AccuracyScore > 80 ? "green" : "#C03535";
+          // console.log("results", results);
 
           // const avgScore =
           //   results?.AccuracyScore.reduce((sum, p) => sum + p.AccuracyScore, 0) /
@@ -49,7 +49,6 @@ const Feedback = () => {
       0
     );
     avgScore = totalScore / assessmentResult.phonemes.length;
-    console.log(`Average Accuracy Score: ${avgScore}%`);
   }
 
   if (!assessmentResult) return null;
