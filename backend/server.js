@@ -13,17 +13,17 @@ const cors = require("cors"); // Add this import
 // Load environment variables from .env file
 dotenv.config();
 
-console.log("🔍 Environment Variables Debug:");
-console.log("AZURE_SPEECH_KEY exists:", !!process.env.AZURE_SPEECH_KEY);
-console.log(
-  "AZURE_SPEECH_KEY length:",
-  process.env.AZURE_SPEECH_KEY ? process.env.AZURE_SPEECH_KEY.length : 0
-);
-console.log("AZURE_SPEECH_REGION:", process.env.AZURE_SPEECH_REGION);
-console.log(
-  "All env keys:",
-  Object.keys(process.env).filter((key) => key.includes("AZURE"))
-);
+// console.log("🔍 Environment Variables Debug:");
+// console.log("AZURE_SPEECH_KEY exists:", !!process.env.AZURE_SPEECH_KEY);
+// console.log(
+//   "AZURE_SPEECH_KEY length:",
+//   process.env.AZURE_SPEECH_KEY ? process.env.AZURE_SPEECH_KEY.length : 0
+// );
+// console.log("AZURE_SPEECH_REGION:", process.env.AZURE_SPEECH_REGION);
+// console.log(
+//   "All env keys:",
+//   Object.keys(process.env).filter((key) => key.includes("AZURE"))
+// );
 
 const app = express();
 const corsOptions = {
@@ -219,8 +219,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
     let wavFilePath = null;
 
     try {
-      console.log(`Processing file: ${audioFilePath}`);
-      console.log(`Reference text: "${referenceText}"`);
+      // console.log(`Processing file: ${audioFilePath}`);
+      // console.log(`Reference text: "${referenceText}"`);
 
       // Check if audio file exists and has content
       if (!fs.existsSync(audioFilePath)) {
@@ -229,7 +229,7 @@ async function assessPronunciation(audioFilePath, referenceText) {
       }
 
       const audioData = fs.readFileSync(audioFilePath);
-      console.log(`Audio file size: ${audioData.length} bytes`);
+      // console.log(`Audio file size: ${audioData.length} bytes`);
 
       if (audioData.length < 100) {
         console.error("Audio file too small, likely empty or corrupted");
@@ -300,8 +300,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
         (result) => {
           clearTimeout(recognitionTimeout);
 
-          console.log(`Recognition result reason: ${result.reason}`);
-          console.log(`Recognition result text: "${result.text}"`);
+          // console.log(`Recognition result reason: ${result.reason}`);
+          // console.log(`Recognition result text: "${result.text}"`);
 
           // Initialize enhanced result structure
           const processedResult = {
@@ -320,15 +320,15 @@ async function assessPronunciation(audioFilePath, referenceText) {
             result.reason === sdk.ResultReason.RecognizedSpeech &&
             result.text
           ) {
-            console.log("Speech successfully recognized:", result.text);
+            // console.log("Speech successfully recognized:", result.text);
 
             try {
               const pronunciationResult =
                 sdk.PronunciationAssessmentResult.fromResult(result);
-              console.log(
-                "Pronunciation result available:",
-                !!pronunciationResult
-              );
+              // console.log(
+              //   "Pronunciation result available:",
+              //   !!pronunciationResult
+              // );
 
               if (pronunciationResult) {
                 // Extract scores with proper null checking
@@ -341,25 +341,25 @@ async function assessPronunciation(audioFilePath, referenceText) {
                 processedResult.completenessScore =
                   pronunciationResult.completenessScore ?? 0;
 
-                console.log("Azure scores:", {
-                  pronunciation: processedResult.pronunciationScore,
-                  accuracy: processedResult.AccuracyScore,
-                  fluency: processedResult.fluencyScore,
-                  completeness: processedResult.completenessScore,
-                });
+                // console.log("Azure scores:", {
+                //   pronunciation: processedResult.pronunciationScore,
+                //   accuracy: processedResult.AccuracyScore,
+                //   fluency: processedResult.fluencyScore,
+                //   completeness: processedResult.completenessScore,
+                // });
 
                 // Debug the full pronunciation result structure
-                console.log(
-                  "Full pronunciation result:",
-                  JSON.stringify(pronunciationResult, null, 2)
-                );
+                // console.log(
+                //   "Full pronunciation result:",
+                //   JSON.stringify(pronunciationResult, null, 2)
+                // );
 
                 // Process phoneme results and map to letters
                 if (
                   pronunciationResult.detailResult &&
                   pronunciationResult.detailResult.Words
                 ) {
-                  console.log("Processing Azure phoneme results...");
+                  // console.log("Processing Azure phoneme results...");
                   const azurePhonemes = [];
 
                   pronunciationResult.detailResult.Words.forEach((word) => {
@@ -384,12 +384,12 @@ async function assessPronunciation(audioFilePath, referenceText) {
                         phoneme.accuracy ??
                         0;
 
-                      console.log(
-                        `Phoneme ${index}:`,
-                        phoneme.Phoneme ?? phoneme.phoneme,
-                        "Score:",
-                        accuracyScore
-                      );
+                      // console.log(
+                      //   `Phoneme ${index}:`,
+                      //   phoneme.Phoneme ?? phoneme.phoneme,
+                      //   "Score:",
+                      //   accuracyScore
+                      // );
 
                       azurePhonemes.push({
                         phoneme: phoneme.Phoneme ?? phoneme.phoneme ?? "",
@@ -412,9 +412,9 @@ async function assessPronunciation(audioFilePath, referenceText) {
 
             // If we have recognized text but no phonemes, create enhanced mapping
             if (processedResult.phonemes.length === 0) {
-              console.log(
-                "No valid phonemes from Azure, generating letter-level scores based on overall pronunciation"
-              );
+              // console.log(
+              //   "No valid phonemes from Azure, generating letter-level scores based on overall pronunciation"
+              // );
               processedResult.phonemes = generateLetterLevelScores(
                 referenceText,
                 result.text,
@@ -428,8 +428,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
 
             if (result.reason === sdk.ResultReason.Canceled) {
               const cancellation = sdk.CancellationDetails.fromResult(result);
-              console.log("Cancellation reason:", cancellation.reason);
-              console.log("Error details:", cancellation.errorDetails);
+              // console.log("Cancellation reason:", cancellation.reason);
+              // console.log("Error details:", cancellation.errorDetails);
             }
 
             processedResult.phonemes = generateLetterLevelScores(
