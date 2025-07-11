@@ -10,7 +10,7 @@ const Feedback = () => {
   const handlePlayAudio = () => {
     if (assessmentResult.audioUrl) {
       const audio = new Audio(
-        `http://localhost:8081${assessmentResult.audioUrl}`
+        `https://speeki-pronounce-5baqq.ondigitalocean.app/${assessmentResult.audioUrl}`
       );
       audio.play().catch((err) => {
         console.error("Audio play failed:", err);
