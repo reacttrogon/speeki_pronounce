@@ -4,18 +4,20 @@ import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust 
 const Feedback = () => {
   const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage } =
     useContext(AssessmentContext);
-
+  
+    console.log("assessmentResult",assessmentResult)
+    
   const handlePlayAudio = () => {
-    if (assessmentResult.audioUrl) {
-      const audio = new Audio(
-        `https://speeki-pronounce-5baqq.ondigitalocean.app/${assessmentResult.audioUrl}`
-        `https://speeki-pronounce-5baqq.ondigitalocean.app/${assessmentResult.audioUrl}`
-      );
-      audio.play();
-    } else {
-      console.warn("No audio URL found in assessmentResult");
-    }
-  };
+  if (assessmentResult.audioUrl) {
+    const audio = new Audio(`http://localhost:8081${assessmentResult.audioUrl}`);
+    audio.play().catch((err) => {
+      console.error("Audio play failed:", err);
+    });
+  } else {
+    console.warn("No audio URL found in assessmentResult");
+  }
+};
+
 
   const handleTryAgain = () => {
     setAssessmentResult(null); // Clears feedback
