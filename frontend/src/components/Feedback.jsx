@@ -4,20 +4,33 @@ import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust 
 const Feedback = () => {
   const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage } =
     useContext(AssessmentContext);
-  
-    console.log("assessmentResult",assessmentResult)
-    
-  const handlePlayAudio = () => {
-  if (assessmentResult.audioUrl) {
-    const audio = new Audio(`http://localhost:8081${assessmentResult.audioUrl}`);
-    audio.play().catch((err) => {
-      console.error("Audio play failed:", err);
-    });
-  } else {
-    console.warn("No audio URL found in assessmentResult");
-  }
-};
 
+  console.log("assessmentResult", assessmentResult);
+
+  const handlePlayAudio = () => {
+    if (assessmentResult.audioUrl) {
+      const audio = new Audio(
+        `http://localhost:8081${assessmentResult.audioUrl}`
+      );
+      audio.play().catch((err) => {
+        console.error("Audio play failed:", err);
+      });
+    } else {
+      console.warn("No audio URL found in assessmentResult");
+    }
+  };
+
+  const handlePlayReferenceAudio = () => {
+    if (assessmentResult.referenceAudio?.data) {
+      // The data is already in the correct format: "data:audio/mpeg;base64,..."
+      const audio = new Audio(assessmentResult.referenceAudio.data);
+      audio.play().catch((err) => {
+        console.error("Reference audio play failed:", err);
+      });
+    } else {
+      console.warn("No reference audio found in assessmentResult");
+    }
+  };
 
   const handleTryAgain = () => {
     setAssessmentResult(null); // Clears feedback
@@ -82,11 +95,13 @@ const Feedback = () => {
           className="w-6 h-6 cursor-pointer"
           onClick={handlePlayAudio}
         />
-        {/* <img
-          src="/images/hearing.png"
-          alt="Listen Again"
-          className="w-6 h-6 cursor-pointer"
-        /> */}
+        <img
+          src="./images/hearing.png"
+          alt="Play Reference Audio"
+          className="w-6 h-6 cursor-pointer tr6ansition-opacity hover:opacity-80"
+          onClick={handlePlayReferenceAudio}
+          title="Play reference pronunciation"
+        />
       </div>
 
       {/* Score Box */}

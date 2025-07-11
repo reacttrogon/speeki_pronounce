@@ -874,7 +874,7 @@ app.get("/api/test-azure", (req, res) => {
   }
 });
 
-// Enhanced API endpoint for pronunciation assessment
+// Enhanced API endpoint for pronunciation assessment with optional reference audio
 app.post(
   "/api/assess-pronunciation",
   upload.single("audio"),
@@ -893,10 +893,16 @@ app.post(
       audioFilePath = req.file.path;
       const referenceWord = req.body.word;
 
+      // NEW: Optional parameters for reference audio
+      const includeReferenceAudio = req.body.includeReferenceAudio === "true";
+      const voiceName = req.body.voiceName || "en-US-JennyNeural";
+      const speechSpeed = req.body.speechSpeed || "0.7";
+
       console.log(`Received audio file: ${audioFilePath}`);
       console.log(`Reference word: ${referenceWord}`);
       console.log(`File type: ${req.file.mimetype}`);
       console.log(`File size: ${req.file.size} bytes`);
+      console.log(`Include reference audio: ${includeReferenceAudio}`);
 
       try {
         // Process the audio with enhanced Azure SDK integration
@@ -912,11 +918,44 @@ app.post(
           referenceWord
         );
 
-        console.log("Enhanced assessment result:", assessmentResult);
-        console.log(
-          "Enhanced assessment result:",
-          assessmentResult.recognizedText
-        );
+        // NEW: Generate reference audio if requested
+        if (includeReferenceAudio) {
+          try {
+            const referenceAudioData = await generateReferenceAudio(
+              referenceWord,
+              voiceName,
+              speechSpeed
+            );
+
+            if (referenceAudioData) {
+              // Convert audio data to base64 for embedding in response
+              const base64Audio =
+                Buffer.from(referenceAudioData).toString("base64");
+              assessmentResult.referenceAudio = {
+                data: `data:audio/mpeg;base64,${base64Audio}`,
+                voiceName: voiceName,
+                speed: speechSpeed,
+                text: referenceWord,
+              };
+            }
+          } catch (referenceError) {
+            console.error("Error generating reference audio:", referenceError);
+            // Don't fail the whole request, just add a note
+            assessmentResult.referenceAudio = {
+              error: "Reference audio generation failed",
+              fallbackUrl: `/api/reference-audio/${encodeURIComponent(
+                referenceWord
+              )}?voice=${encodeURIComponent(voiceName)}`,
+            };
+          }
+        }
+
+        console.log("Enhanced assessment result:", {
+          ...assessmentResult,
+          referenceAudio: assessmentResult.referenceAudio
+            ? "included"
+            : "not requested",
+        });
 
         // Return the enhanced assessment results
         res.json(assessmentResult);
@@ -940,6 +979,38 @@ app.post(
             "Processing error occurred. Please try recording again.",
         };
 
+        // Include reference audio even in fallback if requested
+        if (includeReferenceAudio) {
+          try {
+            const referenceAudioData = await generateReferenceAudio(
+              referenceWord,
+              voiceName,
+              speechSpeed
+            );
+            if (referenceAudioData) {
+              const base64Audio =
+                Buffer.from(referenceAudioData).toString("base64");
+              fallbackResult.referenceAudio = {
+                data: `data:audio/mpeg;base64,${base64Audio}`,
+                voiceName: voiceName,
+                speed: speechSpeed,
+                text: referenceWord,
+              };
+            }
+          } catch (referenceError) {
+            console.error(
+              "Error generating fallback reference audio:",
+              referenceError
+            );
+            fallbackResult.referenceAudio = {
+              error: "Reference audio generation failed",
+              fallbackUrl: `/api/reference-audio/${encodeURIComponent(
+                referenceWord
+              )}`,
+            };
+          }
+        }
+
         res.json(fallbackResult);
       }
     } catch (error) {
@@ -961,6 +1032,62 @@ app.post(
     }
   }
 );
+
+// NEW: Helper function to generate reference audio
+async function generateReferenceAudio(
+  text,
+  voiceName = "en-US-JennyNeural",
+  speed = "1.0"
+) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create speech config
+      const speechConfig = sdk.SpeechConfig.fromSubscription(
+        process.env.AZURE_SPEECH_KEY,
+        process.env.AZURE_SPEECH_REGION
+      );
+
+      speechConfig.speechSynthesisVoiceName = voiceName;
+      speechConfig.speechSynthesisOutputFormat =
+        sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
+
+      // Create synthesizer with null audio config to get audio data directly
+      const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
+
+      // Generate SSML for better control
+      const ssml = `
+        <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+          <voice name="${voiceName}">
+            <prosody rate="${speed}">
+              ${text}
+            </prosody>
+          </voice>
+        </speak>
+      `;
+
+      synthesizer.speakSsmlAsync(
+        ssml,
+        (result) => {
+          if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+            resolve(result.audioData);
+          } else {
+            console.error("Speech synthesis failed:", result.reason);
+            resolve(null);
+          }
+          synthesizer.close();
+        },
+        (error) => {
+          console.error("Speech synthesis error:", error);
+          synthesizer.close();
+          resolve(null);
+        }
+      );
+    } catch (error) {
+      console.error("Error in generateReferenceAudio:", error);
+      resolve(null);
+    }
+  });
+}
 
 // Default route to serve the frontend
 app.get("/", (req, res) => {

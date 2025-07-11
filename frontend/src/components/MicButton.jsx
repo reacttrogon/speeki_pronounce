@@ -50,6 +50,7 @@ const MicButton = ({ onAssessmentComplete }) => {
           const formData = new FormData();
           formData.append("audio", audioBlob);
           formData.append("word", wordToAssess);
+          formData.append("includeReferenceAudio", "true");
 
           setStatusMessage("Processing...");
 
