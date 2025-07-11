@@ -206,6 +206,89 @@ const phonemeFeedbackDB = {
   },
 };
 
+// Configuration - adjust as needed
+const MAX_UPLOAD_SIZE_MB = 4; // Maximum total size for uploads folder
+
+// Size-only cleanup function
+async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
+  try {
+    const uploadsDir = path.join(__dirname, "uploads"); 
+
+    console.log("thsi is from cleanup function")
+
+    if (!fs.existsSync(uploadsDir)) {
+      return { deleted: 0, currentSizeMB: 0 };
+    }
+
+    // Get all audio files with size info, sorted by oldest first
+    const files = fs
+      .readdirSync(uploadsDir)
+      .filter((file) => file.endsWith(".webm") || file.endsWith(".wav"))
+      .map((file) => {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          name: file,
+          path: filePath,
+          created: stats.birthtime,
+          size: stats.size,
+        };
+      })
+      .sort((a, b) => a.created - b.created); // Sort by oldest first
+
+    // Calculate total size
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const totalSizeMB = totalSize / (1024 * 1024);
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+    console.log(
+      `📊 Uploads folder size: ${totalSizeMB.toFixed(
+        2
+      )} MB (limit: ${maxSizeMB} MB)`
+    );
+
+    if (totalSize <= maxSizeBytes) {
+      console.log(`✅ No cleanup needed. Size is within limit.`);
+      return { deleted: 0, currentSizeMB: totalSizeMB.toFixed(2) };
+    }
+
+    let currentSize = totalSize;
+    let deletedCount = 0;
+
+    // Delete oldest files until we're under the size limit
+    for (const file of files) {
+      if (currentSize <= maxSizeBytes) break;
+
+      try {
+        fs.unlinkSync(file.path);
+        currentSize -= file.size;
+        deletedCount++;
+        console.log(
+          `🗑️ Deleted: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+        );
+      } catch (err) {
+        console.error(`❌ Failed to delete ${file.name}:`, err.message);
+      }
+    }
+
+    const newSizeMB = currentSize / (1024 * 1024);
+    console.log(
+      `✅ Cleanup completed! Deleted ${deletedCount} files. New size: ${newSizeMB.toFixed(
+        2
+      )} MB`
+    );
+
+    return {
+      deleted: deletedCount,
+      currentSizeMB: newSizeMB.toFixed(2),
+      previousSizeMB: totalSizeMB.toFixed(2),
+    };
+  } catch (error) {
+    console.error("❌ Error during size cleanup:", error);
+    return { deleted: 0, error: error.message };
+  }
+}
+
 // Function to convert WebM to WAV using FFmpeg
 function convertWebMToWav(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
@@ -956,6 +1039,12 @@ app.post(
             ? "included"
             : "not requested",
         });
+
+        setTimeout(() => {
+          cleanupBySize(MAX_UPLOAD_SIZE_MB).catch((err) =>
+            console.warn("Cleanup warning:", err.message)
+          );
+        }, 1000); // Run cleanup 1 second after response is sent
 
         // Return the enhanced assessment results
         res.json(assessmentResult);
