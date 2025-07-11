@@ -5,8 +5,6 @@ const Feedback = () => {
   const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage } =
     useContext(AssessmentContext);
 
-  console.log("assessmentResult", assessmentResult);
-
   const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
   const handlePlayAudio = () => {
