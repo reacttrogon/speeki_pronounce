@@ -2,7 +2,8 @@ import React, { useContext, useRef, useState } from "react";
 import axios from "axios";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
 
-const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
+const API_BASE_URL = "http://localhost:8081";
+// const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
 const MicButton = ({ onAssessmentComplete }) => {
   const [recording, setRecording] = useState(false);

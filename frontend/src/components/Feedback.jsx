@@ -9,6 +9,7 @@ const Feedback = () => {
     if (assessmentResult.audioUrl) {
       const audio = new Audio(
         `https://speeki-pronounce-5baqq.ondigitalocean.app/${assessmentResult.audioUrl}`
+        `https://speeki-pronounce-5baqq.ondigitalocean.app/${assessmentResult.audioUrl}`
       );
       audio.play();
     } else {
@@ -21,16 +22,12 @@ const Feedback = () => {
   };
 
   function ColoredWord({ word, results }) {
+    const formattedWord = word.charAt(0).toUpperCase() + word.slice(1);
     return (
       <div style={{ fontSize: "24px", fontFamily: "Arial" }}>
-        {word.split("").map((letter, index) => {
+        {formattedWord?.split("").map((letter, index) => {
           const result = results.find((p) => p.letterPosition === index);
           const color = result?.AccuracyScore > 80 ? "green" : "#C03535";
-          // console.log("results", results);
-
-          // const avgScore =
-          //   results?.AccuracyScore.reduce((sum, p) => sum + p.AccuracyScore, 0) /
-          //   results.length;
           return (
             <span key={index} style={{ color, marginRight: "2px" }}>
               {letter}
