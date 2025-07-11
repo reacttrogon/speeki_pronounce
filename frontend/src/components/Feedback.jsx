@@ -7,11 +7,11 @@ const Feedback = () => {
 
   console.log("assessmentResult", assessmentResult);
 
+  const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
+
   const handlePlayAudio = () => {
     if (assessmentResult.audioUrl) {
-      const audio = new Audio(
-        `https://speeki-pronounce-5baqq.ondigitalocean.app/${assessmentResult.audioUrl}`
-      );
+      const audio = new Audio(`${API_BASE_URL}${assessmentResult.audioUrl}`);
       audio.play().catch((err) => {
         console.error("Audio play failed:", err);
       });
@@ -92,15 +92,15 @@ const Feedback = () => {
         <img
           src="./images/speaker-filled-audio-tool.png"
           alt="Play Audio"
-          className="w-6 h-6 cursor-pointer"
-          onClick={handlePlayAudio}
+          className="w-5 h-5 cursor-pointer"
+          onClick={handlePlayReferenceAudio}
         />
         <img
           src="./images/hearing.png"
           alt="Play Reference Audio"
-          className="w-6 h-6 cursor-pointer tr6ansition-opacity hover:opacity-80"
-          onClick={handlePlayReferenceAudio}
+          className="w-5 h-5 cursor-pointer tr6ansition-opacity hover:opacity-80"
           title="Play reference pronunciation"
+          onClick={handlePlayAudio}
         />
       </div>
 
