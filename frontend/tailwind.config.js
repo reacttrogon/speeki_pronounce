@@ -4,15 +4,13 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Obviously"', "sans-serif"], // This overrides default sans
-        obviously: ['"Obviously"', "sans-serif"],
+        // FIXED: Remove duplicates and use consistent naming
+        obviously: ["Obviously", "Inter", "sans-serif"],
+        "obviously-wide": ["ObviouslyWide", "Inter", "sans-serif"],
+        inter: ["Inter", "sans-serif"],
       },
       backgroundImage: {
-        retro: "url('/images/Retro_baground.png')",
-      },
-      fontFamily: {
-        "obviously-wide": ["ObviouslyWide-Regular", "sans-serif"],
-        "obviously-medium": ["ObviouslyWide-Medium", "sans-serif"],
+        retro: "url('/speeki_pronounce/images/Retro_baground.png')", // Fixed path for production
       },
       animation: {
         "pulse-custom": "pulse 1.5s infinite",

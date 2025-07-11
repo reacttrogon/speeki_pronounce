@@ -6,20 +6,39 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 @font-face {
-  font-family: "ObviouslyWide-Regular";
-  src: url("./fonts/Obviously-Regular.otf") format("opentype");
-  font-weight: normal;
+  font-family: "Obviously";
+  src: url("./assets/fonts/Obviously-Regular.otf") format("opentype");
+  font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
+
 @font-face {
-  font-family: "ObviouslyWide-Medium";
-  src: url("./fonts/Obviously-Medium.otf") format("opentype");
-  font-weight: 500; /* Medium weight is typically 500 */
+  font-family: "Obviously";
+  src: url("./assets/fonts/Obviously-Medium.otf") format("opentype");
+  font-weight: 500;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ObviouslyWide";
+  src: url("./assets/fonts/ObviouslyWide-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ObviouslyWide";
+  src: url("./assets/fonts/ObviouslyWide-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 
 body {
-  @apply font-sans;
+  @apply font-obviously;
 }
 /* Custom styles for the app */
 @layer components {

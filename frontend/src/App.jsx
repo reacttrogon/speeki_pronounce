@@ -15,7 +15,7 @@ function App() {
   const numericIndex = storedIndex !== null ? parseInt(storedIndex, 10) : 0;
 
   return (
-    <div className="flex items-center justify-center w-full min-h-screen bg-black font-obviously-medium">
+    <div className="flex items-center justify-center w-full min-h-screen bg-black font-obviously">
       <div className="min-h-screen bg-[#a40dee] to-white flex flex-col items-center max-w-[600px] w-full relative ">
         {/* upper section */}
         <div
