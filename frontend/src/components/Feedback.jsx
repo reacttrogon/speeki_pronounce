@@ -1,18 +1,57 @@
-import React, { useContext } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
 
 const Feedback = () => {
   const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage } =
     useContext(AssessmentContext);
+  
+  const [isUserAudioPlaying, setIsUserAudioPlaying] = useState(false);
+  const [isReferenceAudioPlaying, setIsReferenceAudioPlaying] = useState(false);
+  const userAudioRef = useRef(null);
+  const referenceAudioRef = useRef(null);
 
+    // const API_BASE_URL = "http://localhost:8080" 
   const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
+
+  // Cleanup audio on component unmount or when assessmentResult changes
+  useEffect(() => {
+    return () => {
+      if (userAudioRef.current) {
+        userAudioRef.current.pause();
+        userAudioRef.current = null;
+      }
+      if (referenceAudioRef.current) {
+        referenceAudioRef.current.pause();
+        referenceAudioRef.current = null;
+      }
+    };
+  }, [assessmentResult]);
 
   const handlePlayAudio = () => {
     if (assessmentResult.audioUrl) {
-      const audio = new Audio(`${API_BASE_URL}${assessmentResult.audioUrl}`);
-      audio.play().catch((err) => {
-        console.error("Audio play failed:", err);
-      });
+      if (!userAudioRef.current) {
+        userAudioRef.current = new Audio(`${API_BASE_URL}${assessmentResult.audioUrl}`);
+        userAudioRef.current.addEventListener('ended', () => {
+          setIsUserAudioPlaying(false);
+        });
+      }
+
+      if (isUserAudioPlaying) {
+        userAudioRef.current.pause();
+        setIsUserAudioPlaying(false);
+      } else {
+        // Pause reference audio if playing
+        if (referenceAudioRef.current && isReferenceAudioPlaying) {
+          referenceAudioRef.current.pause();
+          setIsReferenceAudioPlaying(false);
+        }
+        
+        userAudioRef.current.play().catch((err) => {
+          console.error("Audio play failed:", err);
+          setIsUserAudioPlaying(false);
+        });
+        setIsUserAudioPlaying(true);
+      }
     } else {
       console.warn("No audio URL found in assessmentResult");
     }
@@ -20,16 +59,33 @@ const Feedback = () => {
 
   const handlePlayReferenceAudio = () => {
     if (assessmentResult.referenceAudio?.data) {
-      // The data is already in the correct format: "data:audio/mpeg;base64,..."
-      const audio = new Audio(assessmentResult.referenceAudio.data);
-      audio.play().catch((err) => {
-        console.error("Reference audio play failed:", err);
-      });
+      if (!referenceAudioRef.current) {
+        referenceAudioRef.current = new Audio(assessmentResult.referenceAudio.data);
+        referenceAudioRef.current.addEventListener('ended', () => {
+          setIsReferenceAudioPlaying(false);
+        });
+      }
+
+      if (isReferenceAudioPlaying) {
+        referenceAudioRef.current.pause();
+        setIsReferenceAudioPlaying(false);
+      } else {
+        // Pause user audio if playing
+        if (userAudioRef.current && isUserAudioPlaying) {
+          userAudioRef.current.pause();
+          setIsUserAudioPlaying(false);
+        }
+        
+        referenceAudioRef.current.play().catch((err) => {
+          console.error("Reference audio play failed:", err);
+          setIsReferenceAudioPlaying(false);
+        });
+        setIsReferenceAudioPlaying(true);
+      }
     } else {
       console.warn("No reference audio found in assessmentResult");
     }
   };
-
   const handleTryAgain = () => {
     setAssessmentResult(null); // Clears feedback
   };
@@ -90,13 +146,13 @@ const Feedback = () => {
         <img
           src="./images/speaker-filled-audio-tool.png"
           alt="Play Audio"
-          className="w-5 h-5 cursor-pointer"
+          className="w-8 h-8 cursor-pointer"
           onClick={handlePlayReferenceAudio}
         />
         <img
           src="./images/hearing.png"
           alt="Play Reference Audio"
-          className="w-5 h-5 cursor-pointer tr6ansition-opacity hover:opacity-80"
+          className="w-8 h-8 cursor-pointer tr6ansition-opacity hover:opacity-80"
           title="Play reference pronunciation"
           onClick={handlePlayAudio}
         />
