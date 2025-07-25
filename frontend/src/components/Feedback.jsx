@@ -28,6 +28,7 @@ const Feedback = () => {
   }, [assessmentResult]);
 
   const handlePlayAudio = () => {
+    console.log("clicked")
     if (assessmentResult.audioUrl) {
       if (!userAudioRef.current) {
         userAudioRef.current = new Audio(`${API_BASE_URL}${assessmentResult.audioUrl}`);
