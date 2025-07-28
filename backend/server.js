@@ -223,7 +223,7 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
     // Get all audio files with size info, sorted by oldest first
     const files = fs
       .readdirSync(uploadsDir)
-      .filter((file) => file.endsWith(".webm") || file.endsWith(".wav"))
+      .filter((file) => file.endsWith(".mp3") || file.endsWith(".wav") || file.endsWith(".webm"))
       .map((file) => {
         const filePath = path.join(uploadsDir, file);
         const stats = fs.statSync(filePath);
@@ -289,10 +289,10 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
   }
 }
 
-// Function to convert WebM to WAV using FFmpeg
+// Function to convert WebM to WAV using FFmpeg (for Azure processing)
 function convertWebMToWav(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    console.log(`Converting ${inputPath} to ${outputPath}`);
+    console.log(`Converting ${inputPath} to WAV for Azure processing`);
 
     ffmpeg(inputPath)
       .toFormat("wav")
@@ -300,11 +300,34 @@ function convertWebMToWav(inputPath, outputPath) {
       .audioFrequency(16000)
       .audioChannels(1)
       .on("end", () => {
-        console.log("Conversion completed successfully");
+        console.log("WAV conversion completed successfully");
         resolve(outputPath);
       })
       .on("error", (err) => {
-        console.error("Conversion failed:", err);
+        console.error("WAV conversion failed:", err);
+        reject(err);
+      })
+      .save(outputPath);
+  });
+}
+
+// Function to convert WebM to MP3 using FFmpeg (for storage and playback)
+function convertWebMToMp3(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    console.log(`Converting ${inputPath} to MP3 for storage`);
+
+    ffmpeg(inputPath)
+      .toFormat("mp3")
+      .audioCodec("libmp3lame")
+      .audioFrequency(16000)
+      .audioChannels(1)
+      .audioBitrate(128)
+      .on("end", () => {
+        console.log("MP3 conversion completed successfully");
+        resolve(outputPath);
+      })
+      .on("error", (err) => {
+        console.error("MP3 conversion failed:", err);
         reject(err);
       })
       .save(outputPath);
@@ -856,6 +879,16 @@ function cleanupTempFiles(wavFilePath) {
 // Helper function to create consistent fallback results
 function createFallbackResult(referenceText, audioFilePath, reason) {
   console.log(`Creating fallback result due to: ${reason}`);
+  
+  // Try to determine the correct audio URL (prefer MP3 if available)
+  let audioUrl = `/uploads/${path.basename(audioFilePath)}`;
+  if (audioFilePath.includes('.webm')) {
+    const mp3Path = audioFilePath.replace('.webm', '.mp3');
+    if (fs.existsSync(mp3Path)) {
+      audioUrl = `/uploads/${path.basename(mp3Path)}`;
+    }
+  }
+  
   return {
     word: referenceText,
     recognizedText: "",
@@ -864,7 +897,7 @@ function createFallbackResult(referenceText, audioFilePath, reason) {
     AccuracyScore: 0,
     fluencyScore: 0,
     completenessScore: 0,
-    audioUrl: `/uploads/${path.basename(audioFilePath)}`,
+    audioUrl: audioUrl,
   };
 }
 
@@ -988,11 +1021,24 @@ app.post(
       console.log(`Include reference audio: ${includeReferenceAudio}`);
 
       try {
+        // Convert WebM to MP3 for storage and playback (iOS compatibility)
+        const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
+        await convertWebMToMp3(audioFilePath, mp3FilePath);
+        
         // Process the audio with enhanced Azure SDK integration
         const assessmentResult = await assessPronunciation(
           audioFilePath,
           referenceWord
         );
+        
+        // Update audioUrl to point to MP3 file for playback
+        assessmentResult.audioUrl = `/uploads/${path.basename(mp3FilePath)}`;
+        
+        // Delete the original WebM file after successful conversion
+        if (fs.existsSync(audioFilePath)) {
+          fs.unlinkSync(audioFilePath);
+          console.log("Deleted original WebM file:", audioFilePath);
+        }
 
         // Add contextual feedback message
         assessmentResult.feedbackMessage = generateFeedbackMessage(
@@ -1054,6 +1100,21 @@ app.post(
           processingError
         );
 
+        // Convert WebM to MP3 for fallback result if possible
+        let fallbackAudioUrl = `/uploads/${path.basename(audioFilePath)}`;
+        try {
+          const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
+          await convertWebMToMp3(audioFilePath, mp3FilePath);
+          fallbackAudioUrl = `/uploads/${path.basename(mp3FilePath)}`;
+          
+          // Delete the original WebM file after conversion
+          if (fs.existsSync(audioFilePath)) {
+            fs.unlinkSync(audioFilePath);
+          }
+        } catch (conversionError) {
+          console.warn("Failed to convert to MP3 in fallback:", conversionError.message);
+        }
+
         // Provide enhanced fallback result
         const fallbackResult = {
           word: referenceWord,
@@ -1063,7 +1124,7 @@ app.post(
           AccuracyScore: 0,
           fluencyScore: 0,
           completenessScore: 0,
-          audioUrl: `/uploads/${path.basename(audioFilePath)}`,
+          audioUrl: fallbackAudioUrl,
           feedbackMessage:
             "Processing error occurred. Please try recording again.",
         };
