@@ -214,13 +214,13 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
   try {
     const uploadsDir = path.join(__dirname, "uploads"); 
 
-    console.log("thsi is from cleanup function")
+    console.log("this is from cleanup function")
 
     if (!fs.existsSync(uploadsDir)) {
       return { deleted: 0, currentSizeMB: 0 };
     }
 
-    // Get all audio files with size info, sorted by oldest first
+    // Get all audio files with size info, sorted by oldest first (FIFO - delete oldest files first)
     const files = fs
       .readdirSync(uploadsDir)
       .filter((file) => file.endsWith(".mp3") || file.endsWith(".wav") || file.endsWith(".webm"))
@@ -234,7 +234,7 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
           size: stats.size,
         };
       })
-      .sort((a, b) => a.created - b.created); // Sort by oldest first
+      .sort((a, b) => a.created - b.created); // Sort by oldest first - FIFO order
 
     // Calculate total size
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
@@ -1086,11 +1086,12 @@ app.post(
             : "not requested",
         });
 
+        // Schedule cleanup to run after response is sent, but with longer delay to avoid deleting just-created files
         setTimeout(() => {
           cleanupBySize(MAX_UPLOAD_SIZE_MB).catch((err) =>
             console.warn("Cleanup warning:", err.message)
           );
-        }, 1000); // Run cleanup 1 second after response is sent
+        }, 5000); // Run cleanup 5 seconds after response is sent to avoid deleting the current file
 
         // Return the enhanced assessment results
         res.json(assessmentResult);
