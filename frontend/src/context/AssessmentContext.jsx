@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import { getWordList } from "../data/wordLists.js";
 import { initializeFromUrl, getLanguageConfig } from "../utils/urlUtils.js";
-import { initializeSession, updateSessionProgress, getUserStatistics } from "../utils/sessionManager.js";
+import { initializeSession, updateLanguageProgress, getLanguageProgress } from "../utils/sessionManager.js";
 
 export const AssessmentContext = createContext();
 
@@ -28,8 +28,9 @@ export const AssessmentProvider = ({ children }) => {
   });
 
   const getInitialIndex = () => {
-    if (sessionData && sessionData.progress) {
-      return sessionData.progress.currentWordIndex || 0;
+    const languageProgress = getLanguageProgress(params.token, params.language);
+    if (languageProgress) {
+      return languageProgress.currentWordIndex || 0;
     }
     const storedIndex = localStorage.getItem(`currentWordIndex_${params.language}`);
     return storedIndex !== null ? parseInt(storedIndex, 10) : 0;
@@ -43,23 +44,22 @@ export const AssessmentProvider = ({ children }) => {
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [isValidSession] = useState(isTokenValid && sessionInit.success);
-  const [sessionStats, setSessionStats] = useState(getUserStatistics(params.token));
-  
+  const [languageProgress] = useState(getLanguageProgress(params.token, params.language));
 
 useEffect(() => {
   localStorage.setItem(`currentWordIndex_${language}`, currentWordIndex);
   setCurrentWord(currentWordList[currentWordIndex]);
 }, [currentWordIndex, language, currentWordList]);
 
-// Separate effect for session progress to avoid loops
+// Update language-specific progress
 useEffect(() => {
   if (isValidSession && token && language) {
-    updateSessionProgress(token, language, {
+    updateLanguageProgress(token, language, {
       currentWordIndex,
       lastWordAccessed: currentWordList[currentWordIndex]
     });
   }
-}, [currentWordIndex, isValidSession, token, language]); // Removed currentWordList dependency
+}, [currentWordIndex, isValidSession, token, language]);
 
 // Effect to handle language changes
 useEffect(() => {
@@ -73,26 +73,22 @@ useEffect(() => {
 // Effect to update session stats when assessment is completed
 useEffect(() => {
   if (assessmentResult && isValidSession && token) {
-    // Update session progress with assessment results
-    updateSessionProgress(token, language, {
-      totalAttempts: (sessionData?.progress?.totalAttempts || 0) + 1,
+    // Update language-specific progress with assessment results
+    updateLanguageProgress(token, language, {
+      totalAttempts: (languageProgress?.totalAttempts || 0) + 1,
       lastScore: assessmentResult.pronunciationScore,
       bestScore: Math.max(
-        sessionData?.progress?.bestScore || 0,
+        languageProgress?.bestScore || 0,
         assessmentResult.pronunciationScore
       ),
       averageScore: calculateAverageScore(
-        sessionData?.progress?.averageScore || 0,
-        sessionData?.progress?.totalAttempts || 0,
+        languageProgress?.averageScore || 0,
+        languageProgress?.totalAttempts || 0,
         assessmentResult.pronunciationScore
       )
     });
-
-    // Update stats after session progress is updated
-    const stats = getUserStatistics(token);
-    setSessionStats(stats);
   }
-}, [assessmentResult, isValidSession, token, language]); // Removed sessionData dependency
+}, [assessmentResult, isValidSession, token, language, languageProgress]);
 
 // Helper function to calculate running average
 const calculateAverageScore = (currentAvg, totalAttempts, newScore) => {
@@ -105,10 +101,10 @@ const nextWord = () => {
   setCurrentWordIndex(nextIndex);
   setAssessmentResult(null);
 
-  // Update session progress
+  // Update language-specific progress
   if (isValidSession && token && language) {
-    updateSessionProgress(token, language, {
-      wordsCompleted: (sessionData?.progress?.wordsCompleted || 0) + 1
+    updateLanguageProgress(token, language, {
+      wordsCompleted: (languageProgress?.wordsCompleted || 0) + 1
     });
   }
 };
@@ -135,7 +131,7 @@ const nextWord = () => {
         currentWordList,
         // Session management
         sessionData,
-        sessionStats,
+        languageProgress,
         // Helper functions
         getLanguageConfig: () => getLanguageConfig(language),
       }}

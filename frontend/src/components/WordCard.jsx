@@ -18,10 +18,7 @@ const WordCard = () => {
         Say the word out loud and we'll let you know how well you pronounced it in {languageConfig?.name || 'English'}.
       </p>
 
-      {/* Language debug info */}
-      <div className="mt-1 text-xs text-center text-blue-500">
-        Mode: {languageConfig?.name} ({language})
-      </div>
+      
     </div>
   );
 };

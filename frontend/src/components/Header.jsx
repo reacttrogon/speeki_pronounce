@@ -1,12 +1,15 @@
 import React, { useContext } from "react";
 import { AssessmentContext } from "../context/AssessmentContext.jsx";
+import { enUSWords, enGBWords } from "../data/wordLists.js";
+import { getLanguageProgress } from "../utils/sessionManager.js";
 
 const Header = ({ today = 5, lifetime = 45 }) => {
-  const { languageConfig, isValidSession, sessionStats, sessionData } = useContext(AssessmentContext);
+  const { languageConfig, isValidSession, sessionData, token, language } = useContext(AssessmentContext);
 
-  // Use session data if available, otherwise fall back to props
-  const todayWords = sessionData?.progress?.wordsCompleted || today;
-  const lifetimeWords = Math.max(sessionStats?.totalWords || lifetime, todayWords);
+  // Use language-specific progress
+  const languageProgress = getLanguageProgress(token, language);
+  const overallWords = languageProgress?.wordsCompleted || 0;
+  const totalAvailableWords = language === 'en-us' ? enUSWords.length : enGBWords.length;
   return (
     <div className="relative w-[calc(100%-42px)] mx-[21px] flex flex-col items-center pt-[70px] text-white  ">
       {/* Language Indicator */}
@@ -43,12 +46,12 @@ const Header = ({ today = 5, lifetime = 45 }) => {
         {/* Stats Row */}
         <div className="flex justify-around text-sm font-medium text-yellow-400 ">
           <div className="flex items-center justify-center gap-2">
-            <p className="text-base text-white">Today</p>
-            <p className="text-base">{todayWords}</p>
+            <p className="text-base text-white">Overall</p>
+            <p className="text-base">{overallWords}</p>
           </div>
           <div className="flex items-center justify-center gap-2">
-            <p className="text-base text-white">Total</p>
-            <p className="text-base">{lifetimeWords}</p>
+            <p className="text-base text-white">Life Time</p>
+            <p className="text-base">{totalAvailableWords}</p>
           </div>
         </div>
       </div>
