@@ -1,195 +1,125 @@
 import { createContext, useEffect, useState } from "react";
+import { getWordList } from "../data/wordLists.js";
+import { initializeFromUrl, getLanguageConfig } from "../utils/urlUtils.js";
+import { initializeSession, updateSessionProgress, getUserStatistics } from "../utils/sessionManager.js";
 
 export const AssessmentContext = createContext();
 
-const words = [
-  "pronunciation",
-  "development",
-  "interesting",
-  "technology",
-  "communication",
-  "environment",
-  "opportunity",
-  "understand",
-  "experience",
-  "important",
-  "necessary",
-  "different",
-  "beautiful",
-  "government",
-  "knowledge",
-  "schedule",
-  "temperature",
-  "university",
-  "laboratory",
-  "comfortable",
-  "Photography",
-  "Vegetable",
-  "Comfortable",
-  "Chocolate",
-  "Wednesday",
-  "Lizard",
-  "Breakfast",
-  "Development",
-  "February",
-  "Interesting",
-  "Library",
-  "Family",
-  "Secretary",
-  "Margarine",
-  "Cemetery",
-  "Committee",
-  "Omelette",
-  "Comfortable",
-  "Opera",
-  "Appreciate",
-  "Advertisement",
-  "Ballet",
-  "Broccoli",
-  "Determine",
-  "Penalty",
-  "Swimming pool",
-  "Service",
-  "Award",
-  "Infinite",
-  "Enthusiasm",
-  "Nine",
-  "Miracle",
-  "Atmosphere",
-  "Pastel",
-  "Psychiatrist",
-  "Plumber",
-  "Divorce",
-  "Opportunity",
-  "Management",
-  "Finance",
-  "Obstacle",
-  "Industry",
-  "Executive",
-  "Delicious",
-  "Love",
-  "Comfort",
-  "License",
-  "Forgive",
-  "Queen",
-  "Quiz",
-  "Bowl",
-  "Pollution",
-  "Forgive",
-  "Against",
-  "Again",
-  "Eyebrow",
-  "Menu",
-  "Uber",
-  "Botox",
-  "Aisle",
-  "Emerald",
-  "Image",
-  "Desperate",
-  "Content",
-  "Divorce",
-  "Opportunity",
-  "Management",
-  "Finance",
-  "Towel",
-  "Premises",
-  "Dilemma",
-  "Hazard",
-  "Pandemic",
-  "Resides",
-  "Mannequin",
-  "Delicious",
-  "Government",
-  "Menu",
-  "Uber",
-  "Stove",
-  "Young",
-  "Tailor",
-  "Target",
-  "Botox",
-  "License",
-  "Algorithm",
-  "Executive",
-  "Niche",
-  "Mischievous",
-  "Therapy",
-  "Content",
-  "Dilemma",
-  "Quick",
-  "Executive",
-  "Mannequin",
-  "Delicious",
-  "Architect",
-  "Forgive",
-  "Relative",
-  "Toward",
-  "Suit",
-  "Queer",
-  "Quickly",
-  "February",
-  "Tuesday",
-  "Clothes",
-  "Onion",
-  "Debt",
-  "Oven",
-  "Coupon",
-  "Salmon",
-  "Listen",
-  "Vehicle",
-  "Debt",
-  "Sword",
-  "Receipt",
-  "Island",
-  "Debris",
-  "Rendezvous",
-  "Etc.",
-  "Subtle",
-  "Cupboard",
-  "Genre",
-  "Almond",
-  "Colonel",
-  "Cucumber",
-  "Woman",
-  "Women",
-  "Gauge",
-  "Chaos",
-  "Mojito",
-  "Salad",
-  "Password",
-];
+// Legacy word list - now using language-specific lists from wordLists.js
 
 export const AssessmentProvider = ({ children }) => {
+  // Initialize from URL parameters
+  const urlInit = initializeFromUrl();
+  const { params, languageConfig, isTokenValid } = urlInit;
+
+  // Get language-specific word list
+  const currentWordList = getWordList(params.language);
+
+  // Initialize session
+  const sessionInit = initializeSession(params.token, params.language);
+  const sessionData = sessionInit.success ? sessionInit.sessionData : null;
+
+  // Debug logging (can be removed in production)
+  console.log("Language initialized:", {
+    language: params.language,
+    languageConfig: languageConfig.name,
+    isTokenValid,
+    wordListLength: currentWordList.length
+  });
+
   const getInitialIndex = () => {
-    const storedIndex = localStorage.getItem("currentWordIndex");
+    if (sessionData && sessionData.progress) {
+      return sessionData.progress.currentWordIndex || 0;
+    }
+    const storedIndex = localStorage.getItem(`currentWordIndex_${params.language}`);
     return storedIndex !== null ? parseInt(storedIndex, 10) : 0;
   };
 
+  // State management
+  const [language] = useState(params.language);
+  const [token] = useState(params.token);
   const [currentWordIndex, setCurrentWordIndex] = useState(getInitialIndex);
-  const [currentWord, setCurrentWord] = useState(words[getInitialIndex()]);
-
+  const [currentWord, setCurrentWord] = useState(currentWordList[getInitialIndex()]);
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
-
-  const storedIndex = localStorage.getItem("currentWordIndex");
+  const [isValidSession] = useState(isTokenValid && sessionInit.success);
+  const [sessionStats, setSessionStats] = useState(getUserStatistics(params.token));
   
 
 useEffect(() => {
-  localStorage.setItem("currentWordIndex", currentWordIndex);
-  setCurrentWord(words[currentWordIndex]);
-}, [currentWordIndex]);
+  localStorage.setItem(`currentWordIndex_${language}`, currentWordIndex);
+  setCurrentWord(currentWordList[currentWordIndex]);
+}, [currentWordIndex, language, currentWordList]);
 
+// Separate effect for session progress to avoid loops
+useEffect(() => {
+  if (isValidSession && token && language) {
+    updateSessionProgress(token, language, {
+      currentWordIndex,
+      lastWordAccessed: currentWordList[currentWordIndex]
+    });
+  }
+}, [currentWordIndex, isValidSession, token, language]); // Removed currentWordList dependency
 
- const nextWord = () => {
-  const nextIndex = (currentWordIndex + 1) % words.length;
+// Effect to handle language changes
+useEffect(() => {
+  if (!isValidSession) {
+    setStatusMessage("❌ Invalid or missing token. Please check your URL.");
+  } else {
+    setStatusMessage("");
+  }
+}, [isValidSession]);
+
+// Effect to update session stats when assessment is completed
+useEffect(() => {
+  if (assessmentResult && isValidSession && token) {
+    // Update session progress with assessment results
+    updateSessionProgress(token, language, {
+      totalAttempts: (sessionData?.progress?.totalAttempts || 0) + 1,
+      lastScore: assessmentResult.pronunciationScore,
+      bestScore: Math.max(
+        sessionData?.progress?.bestScore || 0,
+        assessmentResult.pronunciationScore
+      ),
+      averageScore: calculateAverageScore(
+        sessionData?.progress?.averageScore || 0,
+        sessionData?.progress?.totalAttempts || 0,
+        assessmentResult.pronunciationScore
+      )
+    });
+
+    // Update stats after session progress is updated
+    const stats = getUserStatistics(token);
+    setSessionStats(stats);
+  }
+}, [assessmentResult, isValidSession, token, language]); // Removed sessionData dependency
+
+// Helper function to calculate running average
+const calculateAverageScore = (currentAvg, totalAttempts, newScore) => {
+  if (totalAttempts === 0) return newScore;
+  return ((currentAvg * totalAttempts) + newScore) / (totalAttempts + 1);
+};
+
+const nextWord = () => {
+  const nextIndex = (currentWordIndex + 1) % currentWordList.length;
   setCurrentWordIndex(nextIndex);
   setAssessmentResult(null);
+
+  // Update session progress
+  if (isValidSession && token && language) {
+    updateSessionProgress(token, language, {
+      wordsCompleted: (sessionData?.progress?.wordsCompleted || 0) + 1
+    });
+  }
 };
 
 
   return (
     <AssessmentContext.Provider
       value={{
-        words,
+        // Legacy support
+        words: currentWordList,
+        // Core functionality
         currentWordIndex,
         assessmentResult,
         setAssessmentResult,
@@ -197,6 +127,17 @@ useEffect(() => {
         currentWord,
         setStatusMessage,
         statusMessage,
+        // Language support
+        language,
+        languageConfig,
+        token,
+        isValidSession,
+        currentWordList,
+        // Session management
+        sessionData,
+        sessionStats,
+        // Helper functions
+        getLanguageConfig: () => getLanguageConfig(language),
       }}
     >
       {children}

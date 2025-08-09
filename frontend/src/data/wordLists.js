@@ -1,0 +1,361 @@
+/**
+ * Language-specific word lists for pronunciation practice
+ */
+
+// American English word list - focuses on American pronunciation patterns
+export const enUSWords = [
+  // Common challenging words for American English
+  "pronunciation",
+  "development",
+  "interesting",
+  "technology",
+  "communication",
+  "environment",
+  "opportunity",
+  "understand",
+  "experience",
+  "important",
+  "necessary",
+  "different",
+  "beautiful",
+  "government",
+  "knowledge",
+  "schedule",
+  "temperature",
+  "university",
+  "laboratory",
+  "comfortable",
+   // American-specific words first for easy testing
+  "aluminum",
+  "center",
+  "theater",
+  "color",
+  "flavor",
+  
+  // American-specific pronunciation challenges
+  "water",
+  "butter",
+  "better",
+  "letter",
+  "matter",
+  "center",
+  "theater",
+  "aluminum",
+  "tomato",
+  "garage",
+  "advertisement",
+  "privacy",
+  "mobile",
+  "fertile",
+  "missile",
+  "hostile",
+  "fragile",
+  "agile",
+  "sterile",
+  "futile",
+  
+  // R-colored vowels (American feature)
+  "car",
+  "park",
+  "start",
+  "heart",
+  "smart",
+  "party",
+  "garden",
+  "market",
+  "carpet",
+  "target",
+  "corner",
+  "order",
+  "border",
+  "quarter",
+  "porter",
+  "shorter",
+  "reporter",
+  "supporter",
+  "disorder",
+  "recorder",
+  
+  // Words with American /æ/ sound
+  "cat",
+  "hat",
+  "bat",
+  "fat",
+  "mat",
+  "rat",
+  "sat",
+  "flat",
+  "that",
+  "black",
+  "track",
+  "crack",
+  "stack",
+  "attack",
+  "package",
+  "manage",
+  "damage",
+  "language",
+  "passage",
+  "message",
+  
+  // American pronunciation of -ary/-ery endings
+  "library",
+  "secretary",
+  "military",
+  "primary",
+  "secondary",
+  "temporary",
+  "necessary",
+  "ordinary",
+  "voluntary",
+  "dictionary",
+  "cemetery",
+  "delivery",
+  "discovery",
+  "recovery",
+  "machinery",
+  "scenery",
+  "surgery",
+  "nursery",
+  "grocery",
+  "battery",
+  
+  // Technology and modern terms
+  "algorithm",
+  "artificial",
+  "intelligence",
+  "machine",
+  "learning",
+  "database",
+  "software",
+  "hardware",
+  "network",
+  "internet",
+  "website",
+  "application",
+  "programming",
+  "computer",
+  "digital",
+  "virtual",
+  "online",
+  "download",
+  "upload",
+  "password",
+  
+  // Business and professional terms
+  "management",
+  "executive",
+  "finance",
+  "marketing",
+  "strategy",
+  "analysis",
+  "presentation",
+  "negotiation",
+  "collaboration",
+  "innovation",
+  "productivity",
+  "efficiency",
+  "performance",
+  "achievement",
+  "leadership",
+  "responsibility",
+  "accountability",
+  "transparency",
+  "sustainability",
+  "profitability"
+];
+
+// British English word list - focuses on British pronunciation patterns
+export const enGBWords = [
+  
+  // Common challenging words for British English
+  "pronunciation",
+  "development",
+  "interesting",
+  "technology",
+  "communication",
+  "environment",
+  "opportunity",
+  "understand",
+  "experience",
+  "important",
+  "necessary",
+  "different",
+  "beautiful",
+  "government",
+  "knowledge",
+  "schedule",
+  "temperature",
+  "university",
+  "laboratory",
+  "comfortable",
+  // British-specific words first for easy testing
+  "aluminium",
+  "centre",
+  "theatre",
+  "colour",
+  "flavour",
+
+  // British-specific pronunciation challenges
+  "water",
+  "butter",
+  "better",
+  "letter",
+  "matter",
+  "centre",
+  "theatre",
+  "aluminium",
+  "tomato",
+  "garage",
+  "advertisement",
+  "privacy",
+  "mobile",
+  "fertile",
+  "missile",
+  "hostile",
+  "fragile",
+  "agile",
+  "sterile",
+  "futile",
+
+  // Non-rhotic pronunciation (British feature)
+  "car",
+  "park",
+  "start",
+  "heart",
+  "smart",
+  "party",
+  "garden",
+  "market",
+  "carpet",
+  "target",
+  "corner",
+  "order",
+  "border",
+  "quarter",
+  "porter",
+  "shorter",
+  "reporter",
+  "supporter",
+  "disorder",
+  "recorder",
+
+  // Words with British /ɑː/ sound
+  "bath",
+  "path",
+  "laugh",
+  "staff",
+  "craft",
+  "draft",
+  "after",
+  "master",
+  "castle",
+  "fast",
+  "last",
+  "past",
+  "class",
+  "glass",
+  "grass",
+  "pass",
+  "ask",
+  "task",
+  "mask",
+  "basket",
+
+  // British pronunciation of -ary/-ery endings
+  "library",
+  "secretary",
+  "military",
+  "primary",
+  "secondary",
+  "temporary",
+  "necessary",
+  "ordinary",
+  "voluntary",
+  "dictionary",
+  "cemetery",
+  "delivery",
+  "discovery",
+  "recovery",
+  "machinery",
+  "scenery",
+  "surgery",
+  "nursery",
+  "grocery",
+  "battery",
+
+  // British vocabulary and spellings
+  "colour",
+  "favour",
+  "honour",
+  "labour",
+  "neighbour",
+  "behaviour",
+  "flavour",
+  "rumour",
+  "humour",
+  "glamour",
+  "organisation",
+  "realisation",
+  "specialisation",
+  "civilisation",
+  "modernisation",
+  "globalisation",
+  "privatisation",
+  "nationalisation",
+  "characterisation",
+  "standardisation",
+
+  // British cultural and social terms
+  "queue",
+  "lorry",
+  "petrol",
+  "biscuit",
+  "jumper",
+  "trainers",
+  "holiday",
+  "autumn",
+  "rubbish",
+  "pavement",
+  "underground",
+  "motorway",
+  "roundabout",
+  "postcode",
+  "cheque",
+  "programme",
+  "tyre",
+  "kerb",
+  "grey",
+  "plough"
+];
+
+/**
+ * Get word list based on language code
+ * @param {string} language - Language code (en-us or en-gb)
+ * @returns {Array} Array of words for the specified language
+ */
+export const getWordList = (language) => {
+  switch (language?.toLowerCase()) {
+    case 'en-gb':
+      return enGBWords;
+    case 'en-us':
+    default:
+      return enUSWords;
+  }
+};
+
+/**
+ * Get word list metadata
+ * @param {string} language - Language code
+ * @returns {Object} Metadata about the word list
+ */
+export const getWordListInfo = (language) => {
+  const wordList = getWordList(language);
+  return {
+    language: language?.toLowerCase() || 'en-us',
+    totalWords: wordList.length,
+    description: language?.toLowerCase() === 'en-gb'
+      ? 'British English pronunciation challenges'
+      : 'American English pronunciation challenges'
+  };
+};

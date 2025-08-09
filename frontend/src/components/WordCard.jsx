@@ -2,8 +2,12 @@ import React, { useContext } from "react";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
 
 const WordCard = () => {
-  const { assessmentResult, setAssessmentResult, nextWord, currentWord } =
+  const { assessmentResult, setAssessmentResult, nextWord, currentWord, languageConfig, currentWordList, language } =
     useContext(AssessmentContext);
+
+  // Debug logging (can be removed in production)
+  console.log("Current word:", currentWord, "Language:", languageConfig?.name);
+
   return (
     <div className="max-w-[330px] max-h-[169px] bg-white  absolute top-[35%] z-20 rounded-[12px] shadow-lg  p-[23px] ">
       <h1 className="font-bold text-[24px] text-center underline pb-[8px]">
@@ -11,8 +15,13 @@ const WordCard = () => {
       </h1>
 
       <p className="text-[14px] leading-[20px] font-medium text-center capitalize text-[#8B8585]">
-        Say the word out loud and we'll let you know how well you pronounced it.
+        Say the word out loud and we'll let you know how well you pronounced it in {languageConfig?.name || 'English'}.
       </p>
+
+      {/* Language debug info */}
+      <div className="mt-1 text-xs text-center text-blue-500">
+        Mode: {languageConfig?.name} ({language})
+      </div>
     </div>
   );
 };

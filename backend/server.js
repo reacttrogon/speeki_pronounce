@@ -74,6 +74,28 @@ app.get("/env", (req, res) => {
   res.json({ AZURE_SPEECH_REGION: process.env.AZURE_SPEECH_REGION });
 });
 
+// Test endpoint for language configuration
+app.get("/api/test-language/:language", (req, res) => {
+  const language = req.params.language;
+  const config = getLanguageVoiceConfig(language);
+  res.json({
+    requestedLanguage: language,
+    config: config,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test endpoint for Azure credentials
+app.get("/api/test-azure", (req, res) => {
+  res.json({
+    hasAzureKey: !!process.env.AZURE_SPEECH_KEY,
+    azureRegion: process.env.AZURE_SPEECH_REGION,
+    keyLength: process.env.AZURE_SPEECH_KEY ? process.env.AZURE_SPEECH_KEY.length : 0,
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Serve static files from uploads directory for audio playback
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -335,13 +357,17 @@ function convertWebMToMp3(inputPath, outputPath) {
 }
 
 // Enhanced function to assess pronunciation using Azure Speech SDK with letter-level scoring
-async function assessPronunciation(audioFilePath, referenceText) {
+async function assessPronunciation(audioFilePath, referenceText, language = "en-US") {
   return new Promise(async (resolve, reject) => {
     let wavFilePath = null;
 
     try {
-      // console.log(`Processing file: ${audioFilePath}`);
-      // console.log(`Reference text: "${referenceText}"`);
+      console.log(`=== PRONUNCIATION ASSESSMENT START ===`);
+      console.log(`Processing file: ${audioFilePath}`);
+      console.log(`Reference text: "${referenceText}"`);
+      console.log(`Language: ${language}`);
+      console.log(`Azure Key available: ${!!process.env.AZURE_SPEECH_KEY}`);
+      console.log(`Azure Region: ${process.env.AZURE_SPEECH_REGION}`);
 
       // Check if audio file exists and has content
       if (!fs.existsSync(audioFilePath)) {
@@ -350,7 +376,7 @@ async function assessPronunciation(audioFilePath, referenceText) {
       }
 
       const audioData = fs.readFileSync(audioFilePath);
-      // console.log(`Audio file size: ${audioData.length} bytes`);
+      console.log(`Audio file size: ${audioData.length} bytes`);
 
       if (audioData.length < 100) {
         console.error("Audio file too small, likely empty or corrupted");
@@ -386,7 +412,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
         process.env.AZURE_SPEECH_REGION
       );
 
-      speechConfig.speechRecognitionLanguage = "en-US";
+      // Set language based on parameter
+      speechConfig.speechRecognitionLanguage = language;
       speechConfig.outputFormat = sdk.OutputFormat.Detailed;
       speechConfig.requestWordLevelTimestamps = true;
       speechConfig.enableDictation = false;
@@ -411,7 +438,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
           createFallbackResult(
             referenceText,
             audioFilePath,
-            "Recognition timeout"
+            "Recognition timeout",
+            language
           )
         );
       }, 15000);
@@ -421,8 +449,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
         (result) => {
           clearTimeout(recognitionTimeout);
 
-          // console.log(`Recognition result reason: ${result.reason}`);
-          // console.log(`Recognition result text: "${result.text}"`);
+          console.log(`Recognition result reason: ${result.reason}`);
+          console.log(`Recognition result text: "${result.text}"`);
 
           // Initialize enhanced result structure
           const processedResult = {
@@ -441,15 +469,24 @@ async function assessPronunciation(audioFilePath, referenceText) {
             result.reason === sdk.ResultReason.RecognizedSpeech &&
             result.text
           ) {
-            // console.log("Speech successfully recognized:", result.text);
+            console.log("Speech successfully recognized:", result.text);
 
             try {
               const pronunciationResult =
                 sdk.PronunciationAssessmentResult.fromResult(result);
-              // console.log(
-              //   "Pronunciation result available:",
-              //   !!pronunciationResult
-              // );
+              console.log(
+                "Pronunciation result available:",
+                !!pronunciationResult
+              );
+
+              if (pronunciationResult) {
+                console.log("Pronunciation scores:", {
+                  pronunciation: pronunciationResult.pronunciationScore,
+                  accuracy: pronunciationResult.accuracyScore,
+                  fluency: pronunciationResult.fluencyScore,
+                  completeness: pronunciationResult.completenessScore
+                });
+              }
 
               if (pronunciationResult) {
                 // Extract scores with proper null checking
@@ -523,7 +560,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
                   processedResult.phonemes = mapPhonemesToLetters(
                     referenceText,
                     azurePhonemes,
-                    processedResult.pronunciationScore
+                    processedResult.pronunciationScore,
+                    language
                   );
                 }
               }
@@ -539,7 +577,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
               processedResult.phonemes = generateLetterLevelScores(
                 referenceText,
                 result.text,
-                processedResult.pronunciationScore
+                processedResult.pronunciationScore,
+                language
               );
             }
           } else {
@@ -556,7 +595,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
             processedResult.phonemes = generateLetterLevelScores(
               referenceText,
               "",
-              25
+              25,
+              language
             );
             processedResult.pronunciationScore = 25;
           }
@@ -575,7 +615,8 @@ async function assessPronunciation(audioFilePath, referenceText) {
             createFallbackResult(
               referenceText,
               audioFilePath,
-              `Recognition error: ${error.message}`
+              `Recognition error: ${error.message}`,
+              language
             )
           );
         }
@@ -587,22 +628,17 @@ async function assessPronunciation(audioFilePath, referenceText) {
         createFallbackResult(
           referenceText,
           audioFilePath,
-          `Assessment error: ${error.message}`
+          `Assessment error: ${error.message}`,
+          language
         )
       );
     }
   });
 }
 
-// New function to map Azure phonemes to individual letters
-function mapPhonemesToLetters(word, azurePhonemes, overallScore) {
-  console.log("Mapping phonemes to letters for word:", word);
-  console.log("Azure phonemes:", azurePhonemes);
-
-  const letterPhonemes = [];
-
-  // Enhanced letter to phoneme mapping
-  const letterToPhoneme = {
+// Language-specific phoneme mappings
+function getLanguagePhonemeMapping(language) {
+  const baseMapping = {
     a: ["/æ/", "/eɪ/", "/ɑ/", "/ə/", "ae", "aa", "ah", "ax", "ay", "ey"],
     e: ["/ɛ/", "/i/", "/ə/", "/eɪ/", "eh", "iy", "ax", "ay", "ey"],
     i: ["/ɪ/", "/aɪ/", "/i/", "/ə/", "ih", "iy", "ay", "ax", "ey"],
@@ -630,6 +666,36 @@ function mapPhonemesToLetters(word, azurePhonemes, overallScore) {
     y: ["/j/", "/aɪ/", "/i/", "y", "ay", "iy"],
     z: ["/z/", "/s/", "z", "s"],
   };
+
+  // Language-specific adjustments
+  if (language === "en-GB") {
+    // British English specific phoneme variations
+    baseMapping.a = ["/ɑː/", "/æ/", "/eɪ/", "/ə/", "aa", "ae", "ah", "ax", "ay", "ey"];
+    baseMapping.o = ["/ɒ/", "/ɔː/", "/oʊ/", "/ə/", "aa", "ao", "ow", "ax", "oh"];
+    baseMapping.r = ["/r/", "r", "er"]; // Non-rhotic - R often not pronounced
+    // Add BATH vowel variations for British English
+    baseMapping.bath = ["/ɑː/", "aa"];
+  } else {
+    // American English (en-US) - more rhotic
+    baseMapping.r = ["/r/", "/ɹ/", "r", "er", "ar", "or"];
+    baseMapping.a = ["/æ/", "/eɪ/", "/ɑ/", "/ə/", "ae", "aa", "ah", "ax", "ay", "ey"];
+  }
+
+  return baseMapping;
+}
+
+// New function to map Azure phonemes to individual letters
+function mapPhonemesToLetters(word, azurePhonemes, overallScore, language = "en-US") {
+  console.log("Mapping phonemes to letters for word:", word);
+  console.log("Azure phonemes:", azurePhonemes);
+  console.log("Language:", language);
+
+  const letterPhonemes = [];
+
+  // Get language-specific phoneme mapping
+  const letterToPhoneme = getLanguagePhonemeMapping(language);
+
+// Note: letterToPhoneme mapping is now handled within individual functions
 
   // If we have valid Azure phonemes with scores, use them
   if (
@@ -710,7 +776,7 @@ function mapPhonemesToLetters(word, azurePhonemes, overallScore) {
   } else {
     // If Azure phonemes are not useful, generate letter-level scores based on overall score
     console.log("Azure phonemes not useful, generating letter-level scores");
-    return generateLetterLevelScores(word, "", overallScore);
+    return generateLetterLevelScores(word, "", overallScore, language);
   }
 
   console.log("Final letter phonemes:", letterPhonemes);
@@ -718,43 +784,16 @@ function mapPhonemesToLetters(word, azurePhonemes, overallScore) {
 }
 
 // New function to generate realistic letter-level pronunciation scores
-function generateLetterLevelScores(word, recognizedText, overallScore) {
+function generateLetterLevelScores(word, recognizedText, overallScore, language = "en-US") {
   console.log(
-    `Generating letter-level scores for "${word}" with overall score ${overallScore}`
+    `Generating letter-level scores for "${word}" with overall score ${overallScore} in ${language}`
   );
 
   const letterPhonemes = [];
-  const baseScore = overallScore || 50;
 
-  // Letter to phoneme mapping
-  const letterToPhoneme = {
-    a: "/æ/",
-    e: "/ɛ/",
-    i: "/ɪ/",
-    o: "/ɒ/",
-    u: "/ʌ/",
-    b: "/b/",
-    c: "/k/",
-    d: "/d/",
-    f: "/f/",
-    g: "/g/",
-    h: "/h/",
-    j: "/dʒ/",
-    k: "/k/",
-    l: "/l/",
-    m: "/m/",
-    n: "/n/",
-    p: "/p/",
-    q: "/kw/",
-    r: "/r/",
-    s: "/s/",
-    t: "/t/",
-    v: "/v/",
-    w: "/w/",
-    x: "/ks/",
-    y: "/j/",
-    z: "/z/",
-  };
+  // Get language-specific phoneme mapping
+  const letterToPhoneme = getLanguagePhonemeMapping(language);
+  const baseScore = overallScore || 50;
 
   // Calculate text similarity if we have recognized text
   let textSimilarity = 0.7; // Default
@@ -767,7 +806,8 @@ function generateLetterLevelScores(word, recognizedText, overallScore) {
 
   for (let i = 0; i < word.length; i++) {
     const letter = word[i].toLowerCase();
-    const phoneme = letterToPhoneme[letter] || "/ə/";
+    const phonemeOptions = letterToPhoneme[letter] || ["/ə/"];
+    const phoneme = phonemeOptions[0]; // Use the first (primary) phoneme
 
     // Generate realistic score based on multiple factors
     let letterScore = baseScore;
@@ -876,10 +916,28 @@ function cleanupTempFiles(wavFilePath) {
   }
 }
 
+// Helper function to get language-specific voice configuration
+function getLanguageVoiceConfig(language) {
+  const configs = {
+    'en-US': {
+      voiceName: 'en-US-JennyNeural',
+      speechRecognitionLanguage: 'en-US',
+      name: 'American English'
+    },
+    'en-GB': {
+      voiceName: 'en-GB-SoniaNeural',
+      speechRecognitionLanguage: 'en-GB',
+      name: 'British English'
+    }
+  };
+
+  return configs[language] || configs['en-US'];
+}
+
 // Helper function to create consistent fallback results
-function createFallbackResult(referenceText, audioFilePath, reason) {
+function createFallbackResult(referenceText, audioFilePath, reason, language = "en-US") {
   console.log(`Creating fallback result due to: ${reason}`);
-  
+
   // Try to determine the correct audio URL (prefer MP3 if available)
   let audioUrl = `/uploads/${path.basename(audioFilePath)}`;
   if (audioFilePath.includes('.webm')) {
@@ -888,11 +946,11 @@ function createFallbackResult(referenceText, audioFilePath, reason) {
       audioUrl = `/uploads/${path.basename(mp3Path)}`;
     }
   }
-  
+
   return {
     word: referenceText,
     recognizedText: "",
-    phonemes: generateLetterLevelScores(referenceText, "", 25),
+    phonemes: generateLetterLevelScores(referenceText, "", 25, language),
     pronunciationScore: 25,
     AccuracyScore: 0,
     fluencyScore: 0,
@@ -1009,36 +1067,56 @@ app.post(
       audioFilePath = req.file.path;
       const referenceWord = req.body.word;
 
-      // NEW: Optional parameters for reference audio
+      // NEW: Language and voice parameters
+      const language = req.body.language || "en-US";
       const includeReferenceAudio = req.body.includeReferenceAudio === "true";
-      const voiceName = req.body.voiceName || "en-US-JennyNeural";
+
+      // Set default voice based on language
+      let defaultVoice = "en-US-JennyNeural";
+      if (language.toLowerCase() === "en-gb") {
+        defaultVoice = "en-GB-SoniaNeural";
+      }
+
+      const voiceName = req.body.voiceName || defaultVoice;
       const speechSpeed = req.body.speechSpeed || "0.7";
 
       console.log(`Received audio file: ${audioFilePath}`);
       console.log(`Reference word: ${referenceWord}`);
+      console.log(`Language: ${language}`);
+      console.log(`Voice: ${voiceName}`);
       console.log(`File type: ${req.file.mimetype}`);
       console.log(`File size: ${req.file.size} bytes`);
       console.log(`Include reference audio: ${includeReferenceAudio}`);
+      console.log(`Request body:`, req.body);
 
       try {
-        // Convert WebM to MP3 for storage and playback (iOS compatibility)
-        const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
-        await convertWebMToMp3(audioFilePath, mp3FilePath);
-        
-        // Process the audio with enhanced Azure SDK integration
-        const assessmentResult = await assessPronunciation(
-          audioFilePath,
-          referenceWord
-        );
-        
-        // Update audioUrl to point to MP3 file for playback
-        assessmentResult.audioUrl = `/uploads/${path.basename(mp3FilePath)}`;
-        
-        // Delete the original WebM file after successful conversion
-        if (fs.existsSync(audioFilePath)) {
-          fs.unlinkSync(audioFilePath);
-          console.log("Deleted original WebM file:", audioFilePath);
+        let finalAudioPath = audioFilePath;
+        let audioUrl = `/uploads/${path.basename(audioFilePath)}`;
+
+        // Try to convert WebM to MP3 for better compatibility, but continue if it fails
+        let audioFileForAssessment = audioFilePath; // Keep track of which file to use for assessment
+
+        try {
+          const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
+          await convertWebMToMp3(audioFilePath, mp3FilePath);
+          audioUrl = `/uploads/${path.basename(mp3FilePath)}`;
+
+          // Keep the WebM file for Azure assessment, but use MP3 for playback
+          console.log("MP3 conversion successful, keeping WebM for assessment");
+        } catch (conversionError) {
+          console.warn("MP3 conversion failed, using original WebM file:", conversionError.message);
+          // Continue with WebM file
         }
+
+        // Process the audio with enhanced Azure SDK integration (always use original WebM)
+        const assessmentResult = await assessPronunciation(
+          audioFileForAssessment,
+          referenceWord,
+          language
+        );
+
+        // Update audioUrl
+        assessmentResult.audioUrl = audioUrl;
 
         // Add contextual feedback message
         assessmentResult.feedbackMessage = generateFeedbackMessage(
@@ -1049,6 +1127,8 @@ app.post(
 
         // NEW: Generate reference audio if requested
         if (includeReferenceAudio) {
+          console.log(`Generating reference audio for "${referenceWord}" with voice ${voiceName}`);
+          console.log(`Azure credentials check: Key=${!!process.env.AZURE_SPEECH_KEY}, Region=${process.env.AZURE_SPEECH_REGION}`);
           try {
             const referenceAudioData = await generateReferenceAudio(
               referenceWord,
@@ -1057,6 +1137,7 @@ app.post(
             );
 
             if (referenceAudioData) {
+              console.log(`Reference audio generated successfully, size: ${referenceAudioData.length} bytes`);
               // Convert audio data to base64 for embedding in response
               const base64Audio =
                 Buffer.from(referenceAudioData).toString("base64");
@@ -1066,6 +1147,8 @@ app.post(
                 speed: speechSpeed,
                 text: referenceWord,
               };
+            } else {
+              console.warn("Reference audio generation returned null");
             }
           } catch (referenceError) {
             console.error("Error generating reference audio:", referenceError);
@@ -1086,6 +1169,13 @@ app.post(
             : "not requested",
         });
 
+        // Clean up WebM file after successful assessment (if MP3 exists)
+        const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
+        if (fs.existsSync(mp3FilePath) && fs.existsSync(audioFilePath)) {
+          fs.unlinkSync(audioFilePath);
+          console.log("Deleted original WebM file after assessment:", audioFilePath);
+        }
+
         // Schedule cleanup to run after response is sent, but with longer delay to avoid deleting just-created files
         setTimeout(() => {
           cleanupBySize(MAX_UPLOAD_SIZE_MB).catch((err) =>
@@ -1101,26 +1191,27 @@ app.post(
           processingError
         );
 
-        // Convert WebM to MP3 for fallback result if possible
+        // Try to convert WebM to MP3 for fallback result, but use WebM if conversion fails
         let fallbackAudioUrl = `/uploads/${path.basename(audioFilePath)}`;
         try {
           const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
           await convertWebMToMp3(audioFilePath, mp3FilePath);
           fallbackAudioUrl = `/uploads/${path.basename(mp3FilePath)}`;
-          
+
           // Delete the original WebM file after conversion
           if (fs.existsSync(audioFilePath)) {
             fs.unlinkSync(audioFilePath);
           }
         } catch (conversionError) {
-          console.warn("Failed to convert to MP3 in fallback:", conversionError.message);
+          console.warn("Failed to convert to MP3 in fallback, using WebM:", conversionError.message);
+          // Continue with WebM file
         }
 
         // Provide enhanced fallback result
         const fallbackResult = {
           word: referenceWord,
           recognizedText: "",
-          phonemes: generateLetterLevelScores(referenceWord, "", 25),
+          phonemes: generateLetterLevelScores(referenceWord, "", 25, language),
           pronunciationScore: 25,
           AccuracyScore: 0,
           fluencyScore: 0,
@@ -1190,6 +1281,7 @@ async function generateReferenceAudio(
   voiceName = "en-US-JennyNeural",
   speed = "1.0"
 ) {
+  console.log(`generateReferenceAudio called with: text="${text}", voice="${voiceName}", speed="${speed}"`);
   return new Promise((resolve, reject) => {
     try {
       // Create speech config
@@ -1206,8 +1298,9 @@ async function generateReferenceAudio(
       const synthesizer = new sdk.SpeechSynthesizer(speechConfig, null);
 
       // Generate SSML for better control
+      const xmlLang = voiceName.startsWith('en-GB') ? 'en-GB' : 'en-US';
       const ssml = `
-        <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+        <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="${xmlLang}">
           <voice name="${voiceName}">
             <prosody rate="${speed}">
               ${text}
@@ -1216,10 +1309,14 @@ async function generateReferenceAudio(
         </speak>
       `;
 
+      console.log(`Generated SSML: ${ssml}`);
+
       synthesizer.speakSsmlAsync(
         ssml,
         (result) => {
+          console.log(`Speech synthesis result reason: ${result.reason}`);
           if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+            console.log(`Speech synthesis completed, audio data length: ${result.audioData ? result.audioData.length : 'null'}`);
             resolve(result.audioData);
           } else {
             console.error("Speech synthesis failed:", result.reason);

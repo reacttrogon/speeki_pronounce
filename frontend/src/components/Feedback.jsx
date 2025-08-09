@@ -10,8 +10,8 @@ const Feedback = () => {
   const userAudioRef = useRef(null);
   const referenceAudioRef = useRef(null);
 
-    // const API_BASE_URL = "http://localhost:8080" 
-  const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
+  const API_BASE_URL = "http://localhost:3000";
+  // const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
   // Cleanup audio on component unmount or when assessmentResult changes
   useEffect(() => {
@@ -84,7 +84,7 @@ const Feedback = () => {
         setIsReferenceAudioPlaying(true);
       }
     } else {
-      console.warn("No reference audio found in assessmentResult");
+      console.warn("No reference audio available");
     }
   };
   const handleTryAgain = () => {
@@ -97,7 +97,15 @@ const Feedback = () => {
       <div style={{ fontSize: "24px", fontFamily: "Arial" }}>
         {formattedWord?.split("").map((letter, index) => {
           const result = results.find((p) => p.letterPosition === index);
-          const color = result?.AccuracyScore > 80 ? "green" : "#C03535";
+          var color = "#C03535";
+          if (result?.AccuracyScore > 80) {
+            color = "green";
+          } else if (result?.AccuracyScore > 50) {
+            color = "#FFA500";
+          } else {
+            color = "#C03535";
+          }
+
           return (
             <span key={index} style={{ color, marginRight: "2px" }}>
               {letter}
@@ -108,20 +116,16 @@ const Feedback = () => {
     );
   }
 
-  let avgScore = 0;
+  // Using AI's original accuracy score instead of calculated average
 
-  if (assessmentResult?.phonemes?.length) {
-    const totalScore = assessmentResult.phonemes.reduce(
-      (sum, item) => sum + item.AccuracyScore,
-      0
-    );
-    avgScore = totalScore / assessmentResult.phonemes.length;
-  }
+  // Clear status message when feedback is shown
+  useEffect(() => {
+    if (assessmentResult) {
+      setStatusMessage("");
+    }
+  }, [assessmentResult, setStatusMessage]);
 
   if (!assessmentResult) return null;
-  if (assessmentResult) {
-    setStatusMessage("");
-  }
 
   return (
     <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 w-[330px] bg-white rounded-[20px] shadow-xl px-5 py-6">
@@ -167,7 +171,7 @@ const Feedback = () => {
           </span> */}
 
           <span className="font-bold text-black">
-            Accuracy : {Math.round(avgScore)}%
+            Accuracy : {Math.round(assessmentResult.phonemes.reduce((acc, phoneme) => acc + phoneme.AccuracyScore, 0) / assessmentResult.phonemes.length)}%
           </span>
         </p>
         <p className="mt-1 text-xs text-gray-600">
@@ -182,7 +186,6 @@ const Feedback = () => {
             label: "Pronunciation",
             value: assessmentResult.pronunciationScore,
           },
-          { label: "Accuracy", value: assessmentResult.AccuracyScore },
           { label: "Fluency", value: assessmentResult.fluencyScore },
           { label: "Completeness", value: assessmentResult.completenessScore },
         ].map((item) => (

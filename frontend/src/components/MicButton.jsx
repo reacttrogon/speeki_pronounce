@@ -2,8 +2,8 @@ import React, { useContext, useRef, useState } from "react";
 import axios from "axios";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
 
-// const API_BASE_URL = "http://localhost:8081";
-const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
+const API_BASE_URL = "http://localhost:3000";
+
 
 const MicButton = ({ onAssessmentComplete }) => {
   const [recording, setRecording] = useState(false);
@@ -18,6 +18,8 @@ const MicButton = ({ onAssessmentComplete }) => {
     assessmentResult,
     setStatusMessage,
     statusMessage,
+    language,
+    languageConfig,
   } = useContext(AssessmentContext);
   const wordToAssess = currentWord;
 
@@ -50,7 +52,17 @@ const MicButton = ({ onAssessmentComplete }) => {
           const formData = new FormData();
           formData.append("audio", audioBlob);
           formData.append("word", wordToAssess);
+          formData.append("language", languageConfig.speechRecognitionLanguage);
+          formData.append("voiceName", languageConfig.voiceName);
           formData.append("includeReferenceAudio", "true");
+
+          // Debug logging
+          console.log("Sending assessment request with:", {
+            word: wordToAssess,
+            language: languageConfig.speechRecognitionLanguage,
+            voiceName: languageConfig.voiceName,
+            currentLanguage: language
+          });
 
           setStatusMessage("Processing...");
 
