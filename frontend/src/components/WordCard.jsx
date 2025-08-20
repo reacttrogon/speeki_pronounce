@@ -9,7 +9,7 @@ const WordCard = () => {
   console.log("Current word:", currentWord, "Language:", languageConfig?.name);
 
   return (
-    <div className="max-w-[330px] max-h-[169px] bg-white  absolute top-[35%] z-20 rounded-[12px] shadow-lg  p-[23px] ">
+    <div className="word-card-component max-w-[330px] max-h-[169px] bg-white  absolute top-[35%] z-20 rounded-[12px] shadow-lg  p-[23px] ">
       <h1 className="font-bold text-[24px] text-center underline pb-[8px]">
         {currentWord[0]?.toUpperCase() + currentWord.slice(1).toLowerCase()}
       </h1>

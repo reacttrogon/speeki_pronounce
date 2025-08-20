@@ -2,11 +2,12 @@ import Header from "./components/Header";
 import WordCard from "./components/WordCard";
 import MicButton from "./components/MicButton";
 import Feedback from "./components/Feedback";
+import AppTour from "./components/AppTour";
 import { useContext } from "react";
 import { AssessmentContext } from "./context/AssessmentContext.jsx";
 
 function App() {
-  const { assessmentResult, setAssessmentResult, nextWord } =
+  const { assessmentResult, setAssessmentResult, nextWord, isValidSession, token } =
     useContext(AssessmentContext);
 
   const isBlur = assessmentResult !== null && assessmentResult !== undefined;
@@ -52,6 +53,7 @@ function App() {
           <MicButton />
         </div>
         <Feedback />
+        <AppTour isValidSession={isValidSession} assessmentResult={assessmentResult} token={token} />
       </div>
     </div>
   );

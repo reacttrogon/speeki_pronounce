@@ -11,7 +11,7 @@ const Header = ({ today = 5, lifetime = 45 }) => {
   const overallWords = languageProgress?.wordsCompleted || 0;
   const totalAvailableWords = language === 'en-us' ? enUSWords.length : enGBWords.length;
   return (
-    <div className="relative w-[calc(100%-42px)] mx-[21px] flex flex-col items-center pt-[70px] text-white  ">
+    <div className="header-component relative w-[calc(100%-42px)] mx-[21px] flex flex-col items-center pt-[70px] text-white  ">
       {/* Language Indicator */}
       {isValidSession && languageConfig && (
         <div className="absolute top-[15px] right-0 bg-white/20 backdrop-blur-md rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1">

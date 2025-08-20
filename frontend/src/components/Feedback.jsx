@@ -1,5 +1,6 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
+import PronunciationTrainer from "./PronunciationTrainer.jsx";
 
 const Feedback = () => {
   const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage } =
@@ -9,9 +10,11 @@ const Feedback = () => {
   const [isReferenceAudioPlaying, setIsReferenceAudioPlaying] = useState(false);
   const userAudioRef = useRef(null);
   const referenceAudioRef = useRef(null);
+  const [showTrainer, setShowTrainer] = useState(false);
 
-  const API_BASE_URL = "http://localhost:3000";
+  // const API_BASE_URL = "http://localhost:3000";
   // const API_BASE_URL = "https://speeki-pronounce.trogon.info";
+  const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
   // Cleanup audio on component unmount or when assessmentResult changes
   useEffect(() => {
@@ -128,93 +131,101 @@ const Feedback = () => {
   if (!assessmentResult) return null;
 
   return (
-    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 w-[330px] bg-white rounded-[20px] shadow-xl px-5 py-6">
-      {/* Title */}
-      <h5 className="text-sm font-semibold text-center text-gray-700">
-        Pronunciation Feedback
-      </h5>
+    <>
+      <div className="feedback-component absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 w-[330px] bg-white rounded-[20px] shadow-xl px-5 py-6">
+        {/* Title */}
+        <h5 className="text-sm font-semibold text-center text-gray-700">
+          Pronunciation Feedback
+        </h5>
 
-      {/* Dotted Divider */}
-      <div className="border-t border-dashed border-[#a40dee] my-3 w-full" />
+        {/* Dotted Divider */}
+        <div className="border-t border-dashed border-[#a40dee] my-3 w-full" />
 
-      {/* Word */}
-      <div className="text-center text-[26px] font-bold text-[#C03535]">
-        {/* {assessmentResult?.word} */}
-        <ColoredWord
-          word={assessmentResult?.word}
-          results={assessmentResult?.phonemes}
-        />
-      </div>
+        {/* Word */}
+        <div className="colored-word text-center text-[26px] font-bold text-[#C03535] cursor-pointer" onClick={() => setShowTrainer(true)}>
+          {/* {assessmentResult?.word} */}
+          <ColoredWord
+            word={assessmentResult?.word}
+            results={assessmentResult?.phonemes}
+          />
+        </div>
 
-      {/* Audio Controls */}
-      <div className="flex items-center justify-center gap-4 mt-2">
-        <img
-          src="./images/speaker-filled-audio-tool.png"
-          alt="Play Audio"
-          className="w-8 h-8 cursor-pointer"
-          onClick={handlePlayReferenceAudio}
-        />
-        <img
-          src="./images/hearing.png"
-          alt="Play Reference Audio"
-          className="w-8 h-8 cursor-pointer tr6ansition-opacity hover:opacity-80"
-          title="Play reference pronunciation"
-          onClick={handlePlayAudio}
-        />
-      </div>
+        {/* Audio Controls */}
+        <div className="flex items-center justify-center gap-4 mt-2">
+          <img
+            src="./images/speaker-filled-audio-tool.png"
+            alt="Play Audio"
+            className="w-8 h-8 cursor-pointer"
+            onClick={handlePlayReferenceAudio}
+          />
+          <img
+            src="./images/hearing.png"
+            alt="Play Reference Audio"
+            className="w-8 h-8 cursor-pointer tr6ansition-opacity hover:opacity-80"
+            title="Play reference pronunciation"
+            onClick={handlePlayAudio}
+          />
+        </div>
 
-      {/* Score Box */}
-      <div className="mt-4 bg-[#FFF5E5] rounded-md px-4 py-2 text-center border border-yellow-300">
-        <p className="text-[16px] font-semibold text-green-700">
-          {/* <span role="img" aria-label="smile">
-            😃
-          </span> */}
+        {/* Score Box */}
+        <div className="mt-4 bg-[#FFF5E5] rounded-md px-4 py-2 text-center border border-yellow-300">
+          <p className="text-[16px] font-semibold text-green-700">
+            {/* <span role="img" aria-label="smile">
+              😃
+            </span> */}
 
-          <span className="font-bold text-black">
-            Accuracy : {Math.round(assessmentResult.phonemes.reduce((acc, phoneme) => acc + phoneme.AccuracyScore, 0) / assessmentResult.phonemes.length)}%
-          </span>
-        </p>
-        <p className="mt-1 text-xs text-gray-600">
-          {assessmentResult?.feedbackMessage}
-        </p>
-      </div>
+            <span className="font-bold text-black">
+              Accuracy : {Math.round(assessmentResult.phonemes.reduce((acc, phoneme) => acc + phoneme.AccuracyScore, 0) / assessmentResult.phonemes.length)}%
+            </span>
+          </p>
+          <p className="mt-1 text-xs text-gray-600">
+            {assessmentResult?.feedbackMessage}
+          </p>
+        </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-2 mt-5 text-sm ">
-        {[
-          {
-            label: "Pronunciation",
-            value: assessmentResult.pronunciationScore,
-          },
-          { label: "Fluency", value: assessmentResult.fluencyScore },
-          { label: "Completeness", value: assessmentResult.completenessScore },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="flex justify-between text-center rounded-md "
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 gap-2 mt-5 text-sm ">
+          {[
+            {
+              label: "Pronunciation",
+              value: assessmentResult.pronunciationScore,
+            },
+            { label: "Fluency", value: assessmentResult.fluencyScore },
+            { label: "Completeness", value: assessmentResult.completenessScore },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="flex justify-between text-center rounded-md "
+            >
+              <p className="font-medium text-gray-800">{item.label}</p>
+              <p className="font-bold text-yellow-500 ">{item.value}%</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-between mt-6">
+          <button
+            className="try-again-button px-4 py-2 text-sm font-medium text-red-500 border border-red-400 rounded-md hover:bg-red-50"
+            onClick={handleTryAgain}
           >
-            <p className="font-medium text-gray-800">{item.label}</p>
-            <p className="font-bold text-yellow-500 ">{item.value}%</p>
-          </div>
-        ))}
+            Try Again
+          </button>
+          <button
+            className="next-word-button px-4 py-2 rounded-md border border-[#a40dee] text-[#a40dee] font-medium text-sm hover:bg-[#f6ebff]"
+            onClick={nextWord}
+          >
+            Next Word
+          </button>
+        </div>
       </div>
-
-      {/* Buttons */}
-      <div className="flex justify-between mt-6">
-        <button
-          className="px-4 py-2 text-sm font-medium text-red-500 border border-red-400 rounded-md hover:bg-red-50"
-          onClick={handleTryAgain}
-        >
-          Try Again
-        </button>
-        <button
-          className="px-4 py-2 rounded-md border border-[#a40dee] text-[#a40dee] font-medium text-sm hover:bg-[#f6ebff]"
-          onClick={nextWord}
-        >
-          Next Word
-        </button>
-      </div>
-    </div>
+      {showTrainer && (
+        <PronunciationTrainer
+          assessmentResult={assessmentResult}
+          onClose={() => setShowTrainer(false)}
+        />
+      )}
+    </>
   );
 };
 

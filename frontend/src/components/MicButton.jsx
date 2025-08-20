@@ -2,8 +2,8 @@ import React, { useContext, useRef, useState } from "react";
 import axios from "axios";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
 
-const API_BASE_URL = "http://localhost:3000";
-// const API_BASE_URL = "https://speeki-pronounce.trogon.info/";
+// const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
 const MicButton = ({ onAssessmentComplete }) => {
   const [recording, setRecording] = useState(false);
@@ -106,7 +106,7 @@ const MicButton = ({ onAssessmentComplete }) => {
   if (assessmentResult) return null;
 
   return (
-    <div className={`relative z-10 flex flex-col justify-center w-full mt-6 `}>
+    <div className={`mic-button-component relative z-10 flex flex-col justify-center w-full mt-6 `}>
       {statusMessage && (
         <p className="text-center status-message text-muted mb-3 text-[10px] text-[#8B8585] ">
           {statusMessage}

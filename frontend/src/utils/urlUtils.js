@@ -26,8 +26,7 @@ export const validateToken = (token) => {
   // Basic token validation - should be a non-empty string with reasonable length
   // You can enhance this with more sophisticated validation as needed
   return typeof token === 'string' && 
-         token.length >= 10 && 
-         token.length <= 200 &&
+         token.length >= 10 &&
          /^[a-zA-Z0-9._-]+$/.test(token);
 };
 
