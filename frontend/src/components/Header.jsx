@@ -29,7 +29,7 @@ const Header = ({ today = 5, lifetime = 45 }) => {
 
       {/* Logo */}
       <img
-        src="./images/Speeki-ai-Logo__Original_Transparen.png"
+        src="/speeki_pronounce/images/Speeki-ai-Logo__Original_Transparen.png"
         alt="Speeki AI brand logo"
         className="w-[51px] h-[47px] absolute top-[24%] left-1/2 transform -translate-x-1/2 z-10"
       />
