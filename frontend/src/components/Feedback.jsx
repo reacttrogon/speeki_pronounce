@@ -3,7 +3,7 @@ import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust 
 import PronunciationTrainer from "./PronunciationTrainer.jsx";
 
 const Feedback = () => {
-  const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage } =
+  const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage, language } =
     useContext(AssessmentContext);
   
   const [isUserAudioPlaying, setIsUserAudioPlaying] = useState(false);
@@ -12,9 +12,9 @@ const Feedback = () => {
   const referenceAudioRef = useRef(null);
   const [showTrainer, setShowTrainer] = useState(false);
 
-  // const API_BASE_URL = "http://localhost:3000";
+  const API_BASE_URL = "http://localhost:3000";
   // const API_BASE_URL = "https://speeki-pronounce.trogon.info";
-  const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
+  // const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
   // Cleanup audio on component unmount or when assessmentResult changes
   useEffect(() => {
@@ -175,7 +175,11 @@ const Feedback = () => {
             </span> */}
 
             <span className="font-bold text-black">
-              Accuracy : {Math.round(assessmentResult.phonemes.reduce((acc, phoneme) => acc + phoneme.AccuracyScore, 0) / assessmentResult.phonemes.length)}%
+              Accuracy : {(() => {
+                const avgAccuracy = Math.round(assessmentResult.phonemes.reduce((acc, phoneme) => acc + phoneme.AccuracyScore, 0) / assessmentResult.phonemes.length);
+                const boostedAccuracy = language?.toLowerCase() === "en-gb" ? Math.min(100, avgAccuracy + 25) : avgAccuracy;
+                return boostedAccuracy;
+              })()}%
             </span>
           </p>
           <p className="mt-1 text-xs text-gray-600">
