@@ -151,17 +151,17 @@ const Feedback = () => {
         </div>
 
         {/* Audio Controls */}
-        <div className="flex items-center justify-center gap-4 mt-2">
+        <div className="flex items-center justify-center gap-4 mt-2 ">
           <img
             src="/speeki_pronounce/images/speaker-filled-audio-tool.png"
             alt="Play Audio"
-            className="w-8 h-8 cursor-pointer"
+            className="w-10 h-10 cursor-pointer"
             onClick={handlePlayReferenceAudio}
           />
           <img
             src="/speeki_pronounce/images/hearing.png"
             alt="Play Reference Audio"
-            className="w-8 h-8 cursor-pointer tr6ansition-opacity hover:opacity-80"
+            className="w-10 h-10 cursor-pointer tr6ansition-opacity hover:opacity-80"
             title="Play reference pronunciation"
             onClick={handlePlayAudio}
           />
