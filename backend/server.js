@@ -1118,6 +1118,14 @@ app.post(
         // Update audioUrl
         assessmentResult.audioUrl = audioUrl;
 
+        // Add 25 points boost for en-GB language (capped at 100)
+        if (language.toLowerCase() === "en-gb") {
+          assessmentResult.pronunciationScore = Math.min(100, assessmentResult.pronunciationScore + 25);
+          assessmentResult.AccuracyScore = Math.min(100, assessmentResult.AccuracyScore + 25);
+          assessmentResult.fluencyScore = Math.min(100, assessmentResult.fluencyScore + 25);
+          assessmentResult.completenessScore = Math.min(100, assessmentResult.completenessScore + 25);
+        }
+
         // Add contextual feedback message
         assessmentResult.feedbackMessage = generateFeedbackMessage(
           assessmentResult.pronunciationScore,
