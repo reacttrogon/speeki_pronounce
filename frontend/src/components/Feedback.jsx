@@ -12,9 +12,9 @@ const Feedback = () => {
   const referenceAudioRef = useRef(null);
   const [showTrainer, setShowTrainer] = useState(false);
 
-  const API_BASE_URL = "http://localhost:3000";
+  // const API_BASE_URL = "http://localhost:3000";
   // const API_BASE_URL = "https://speeki-pronounce.trogon.info";
-  // const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
+  const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
   // Cleanup audio on component unmount or when assessmentResult changes
   useEffect(() => {
