@@ -2,6 +2,7 @@ import React, { useContext, useState, useRef, useEffect } from "react";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
 import PronunciationTrainer from "./PronunciationTrainer.jsx";
 import { CircleAlert } from "lucide-react";
+import { API_BASE_URL } from "../config/api.js";
 
 const Feedback = () => {
   const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage, language } =
@@ -12,10 +13,6 @@ const Feedback = () => {
   const userAudioRef = useRef(null);
   const referenceAudioRef = useRef(null);
   const [showTrainer, setShowTrainer] = useState(false);
-
-  const API_BASE_URL = "http://localhost:3000";
-  // const API_BASE_URL = "https://speeki-pronounce.trogon.info";
-  // const API_BASE_URL = "https://speeki-pronounce-5baqq.ondigitalocean.app";
 
   // Cleanup audio on component unmount or when assessmentResult changes
   useEffect(() => {
@@ -177,12 +174,7 @@ const Feedback = () => {
             </span> */}
 
             <span className="font-bold text-black">
-              Accuracy : {(() => {
-                const avgAccuracy = Math.round(assessmentResult.phonemes.reduce((acc, phoneme) => acc + phoneme.AccuracyScore, 0) / assessmentResult.phonemes.length);
-                // Only boost if accuracy is not 0 (no audio recorded)
-                const boostedAccuracy = (language?.toLowerCase() === "en-gb" && avgAccuracy !== 0) ? Math.min(100, avgAccuracy + 25) : avgAccuracy;
-                return boostedAccuracy;
-              })()}%
+              Accuracy : {assessmentResult.AccuracyScore}%
             </span>
           </p>
           <p className="mt-1 text-xs text-gray-600">

@@ -240,8 +240,6 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
   try {
     const uploadsDir = path.join(__dirname, "uploads"); 
 
-    console.log("this is from cleanup function")
-
     if (!fs.existsSync(uploadsDir)) {
       return { deleted: 0, currentSizeMB: 0 };
     }
@@ -267,14 +265,7 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
     const totalSizeMB = totalSize / (1024 * 1024);
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    console.log(
-      `📊 Uploads folder size: ${totalSizeMB.toFixed(
-        2
-      )} MB (limit: ${maxSizeMB} MB)`
-    );
-
     if (totalSize <= maxSizeBytes) {
-      console.log(`✅ No cleanup needed. Size is within limit.`);
       return { deleted: 0, currentSizeMB: totalSizeMB.toFixed(2) };
     }
 
@@ -289,20 +280,12 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
         fs.unlinkSync(file.path);
         currentSize -= file.size;
         deletedCount++;
-        console.log(
-          `🗑️ Deleted: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
-        );
       } catch (err) {
-        console.error(`❌ Failed to delete ${file.name}:`, err.message);
+        // Silent fail for cleanup
       }
     }
 
     const newSizeMB = currentSize / (1024 * 1024);
-    console.log(
-      `✅ Cleanup completed! Deleted ${deletedCount} files. New size: ${newSizeMB.toFixed(
-        2
-      )} MB`
-    );
 
     return {
       deleted: deletedCount,
@@ -310,7 +293,6 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
       previousSizeMB: totalSizeMB.toFixed(2),
     };
   } catch (error) {
-    console.error("❌ Error during size cleanup:", error);
     return { deleted: 0, error: error.message };
   }
 }
@@ -318,8 +300,6 @@ async function cleanupBySize(maxSizeMB = MAX_UPLOAD_SIZE_MB) {
 // Function to convert WebM to WAV using FFmpeg (for Azure processing)
 function convertWebMToWav(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    console.log(`Converting ${inputPath} to WAV for Azure processing`);
-
     // Check if input file exists
     if (!fs.existsSync(inputPath)) {
       return reject(new Error(`Input file does not exist: ${inputPath}`));
@@ -330,29 +310,16 @@ function convertWebMToWav(inputPath, outputPath) {
       .audioCodec("pcm_s16le")
       .audioFrequency(16000)
       .audioChannels(1)
-      .on("start", (commandLine) => {
-        console.log("FFmpeg command:", commandLine);
-      })
       .on("end", () => {
-        console.log("WAV conversion completed successfully");
         // Verify output file was created
         if (fs.existsSync(outputPath)) {
-          const stats = fs.statSync(outputPath);
-          console.log(`WAV file created: ${outputPath} (${stats.size} bytes)`);
           resolve(outputPath);
         } else {
           reject(new Error("WAV file was not created"));
         }
       })
       .on("error", (err) => {
-        console.error("WAV conversion failed:", err.message);
         reject(err);
-      })
-      .on("stderr", (stderrLine) => {
-        // Log ffmpeg stderr for debugging
-        if (stderrLine.includes("error") || stderrLine.includes("Error")) {
-          console.error("FFmpeg stderr:", stderrLine);
-        }
       })
       .save(outputPath);
   });
@@ -361,8 +328,6 @@ function convertWebMToWav(inputPath, outputPath) {
 // Function to convert WebM to MP3 using FFmpeg (for storage and playback)
 function convertWebMToMp3(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    console.log(`Converting ${inputPath} to MP3 for storage`);
-
     // Check if input file exists
     if (!fs.existsSync(inputPath)) {
       return reject(new Error(`Input file does not exist: ${inputPath}`));
@@ -374,29 +339,16 @@ function convertWebMToMp3(inputPath, outputPath) {
       .audioFrequency(16000)
       .audioChannels(1)
       .audioBitrate(128)
-      .on("start", (commandLine) => {
-        console.log("FFmpeg command:", commandLine);
-      })
       .on("end", () => {
-        console.log("MP3 conversion completed successfully");
         // Verify output file was created
         if (fs.existsSync(outputPath)) {
-          const stats = fs.statSync(outputPath);
-          console.log(`MP3 file created: ${outputPath} (${stats.size} bytes)`);
           resolve(outputPath);
         } else {
           reject(new Error("MP3 file was not created"));
         }
       })
       .on("error", (err) => {
-        console.error("MP3 conversion failed:", err.message);
         reject(err);
-      })
-      .on("stderr", (stderrLine) => {
-        // Log ffmpeg stderr for debugging
-        if (stderrLine.includes("error") || stderrLine.includes("Error")) {
-          console.error("FFmpeg stderr:", stderrLine);
-        }
       })
       .save(outputPath);
   });
@@ -408,24 +360,14 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
     let wavFilePath = null;
 
     try {
-      console.log(`=== PRONUNCIATION ASSESSMENT START ===`);
-      console.log(`Processing file: ${audioFilePath}`);
-      console.log(`Reference text: "${referenceText}"`);
-      console.log(`Language: ${language}`);
-      console.log(`Azure Key available: ${!!process.env.AZURE_SPEECH_KEY}`);
-      console.log(`Azure Region: ${process.env.AZURE_SPEECH_REGION}`);
-
       // Check if audio file exists and has content
       if (!fs.existsSync(audioFilePath)) {
-        console.error("Audio file does not exist:", audioFilePath);
         throw new Error("Audio file not found");
       }
 
       const audioData = fs.readFileSync(audioFilePath);
-      console.log(`Audio file size: ${audioData.length} bytes`);
 
       if (audioData.length < 100) {
-        console.error("Audio file too small, likely empty or corrupted");
         throw new Error("Audio file too small");
       }
 
@@ -477,7 +419,6 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
 
       // Set timeout for recognition
       const recognitionTimeout = setTimeout(() => {
-        console.warn("Recognition timeout reached");
         recognizer.close();
         cleanupTempFiles(wavFilePath);
         resolve(
@@ -494,9 +435,6 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
       recognizer.recognizeOnceAsync(
         (result) => {
           clearTimeout(recognitionTimeout);
-
-          console.log(`Recognition result reason: ${result.reason}`);
-          console.log(`Recognition result text: "${result.text}"`);
 
           // Initialize enhanced result structure
           const processedResult = {
@@ -515,24 +453,9 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
             result.reason === sdk.ResultReason.RecognizedSpeech &&
             result.text
           ) {
-            console.log("Speech successfully recognized:", result.text);
-
             try {
               const pronunciationResult =
                 sdk.PronunciationAssessmentResult.fromResult(result);
-              console.log(
-                "Pronunciation result available:",
-                !!pronunciationResult
-              );
-
-              if (pronunciationResult) {
-                console.log("Pronunciation scores:", {
-                  pronunciation: pronunciationResult.pronunciationScore,
-                  accuracy: pronunciationResult.accuracyScore,
-                  fluency: pronunciationResult.fluencyScore,
-                  completeness: pronunciationResult.completenessScore
-                });
-              }
 
               if (pronunciationResult) {
                 // Extract scores with proper null checking
@@ -545,36 +468,14 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
                 processedResult.completenessScore =
                   pronunciationResult.completenessScore ?? 0;
 
-                // console.log("Azure scores:", {
-                //   pronunciation: processedResult.pronunciationScore,
-                //   accuracy: processedResult.AccuracyScore,
-                //   fluency: processedResult.fluencyScore,
-                //   completeness: processedResult.completenessScore,
-                // });
-
-                // Debug the full pronunciation result structure
-                // console.log(
-                //   "Full pronunciation result:",
-                //   JSON.stringify(pronunciationResult, null, 2)
-                // );
-
                 // Process phoneme results and map to letters
                 if (
                   pronunciationResult.detailResult &&
                   pronunciationResult.detailResult.Words
                 ) {
-                  // console.log("Processing Azure phoneme results...");
                   const azurePhonemes = [];
 
                   pronunciationResult.detailResult.Words.forEach((word) => {
-                    console.log(
-                      "Word:",
-                      word.Word,
-                      "Score:",
-                      word.AccuracyScore ??
-                        word.PronunciationAssessment?.AccuracyScore
-                    );
-
                     // Extract phonemes with enhanced error handling
                     const phonemes =
                       word.Phonemes ||
@@ -587,13 +488,6 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
                         phoneme.PronunciationAssessment?.AccuracyScore ??
                         phoneme.accuracy ??
                         0;
-
-                      // console.log(
-                      //   `Phoneme ${index}:`,
-                      //   phoneme.Phoneme ?? phoneme.phoneme,
-                      //   "Score:",
-                      //   accuracyScore
-                      // );
 
                       azurePhonemes.push({
                         phoneme: phoneme.Phoneme ?? phoneme.phoneme ?? "",
@@ -612,14 +506,11 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
                 }
               }
             } catch (error) {
-              console.error("Error processing pronunciation result:", error);
+              // Silent error handling
             }
 
             // If we have recognized text but no phonemes, create enhanced mapping
             if (processedResult.phonemes.length === 0) {
-              // console.log(
-              //   "No valid phonemes from Azure, generating letter-level scores based on overall pronunciation"
-              // );
               processedResult.phonemes = generateLetterLevelScores(
                 referenceText,
                 result.text,
@@ -628,16 +519,6 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
               );
             }
           } else {
-            console.warn(
-              `Recognition failed or no speech detected. Reason: ${result.reason}`
-            );
-
-            if (result.reason === sdk.ResultReason.Canceled) {
-              const cancellation = sdk.CancellationDetails.fromResult(result);
-              // console.log("Cancellation reason:", cancellation.reason);
-              // console.log("Error details:", cancellation.errorDetails);
-            }
-
             processedResult.phonemes = generateLetterLevelScores(
               referenceText,
               "",
@@ -653,7 +534,6 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
         },
         (error) => {
           clearTimeout(recognitionTimeout);
-          console.error("Recognition error:", error);
           recognizer.close();
           cleanupTempFiles(wavFilePath);
 
@@ -668,7 +548,6 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
         }
       );
     } catch (error) {
-      console.error("Assessment error:", error);
       cleanupTempFiles(wavFilePath);
       resolve(
         createFallbackResult(
@@ -732,30 +611,16 @@ function getLanguagePhonemeMapping(language) {
 
 // New function to map Azure phonemes to individual letters
 function mapPhonemesToLetters(word, azurePhonemes, overallScore, language = "en-US") {
-  console.log("Mapping phonemes to letters for word:", word);
-  console.log("Azure phonemes:", azurePhonemes);
-  console.log("Language:", language);
-
   const letterPhonemes = [];
 
   // Get language-specific phoneme mapping
   const letterToPhoneme = getLanguagePhonemeMapping(language);
-
-// Note: letterToPhoneme mapping is now handled within individual functions
 
   // If we have valid Azure phonemes with scores, use them
   if (
     azurePhonemes.length > 0 &&
     azurePhonemes.some((p) => p.accuracy !== undefined && p.accuracy !== null)
   ) {
-    console.log("Using Azure phoneme scores");
-    console.log(
-      "Valid Azure phonemes found:",
-      azurePhonemes.filter(
-        (p) => p.accuracy !== undefined && p.accuracy !== null
-      )
-    );
-
     let phonemeIndex = 0;
     for (let i = 0; i < word.length; i++) {
       const letter = word[i].toLowerCase();
@@ -788,9 +653,6 @@ function mapPhonemesToLetters(word, azurePhonemes, overallScore, language = "en-
             bestMatch = azurePhoneme;
             letterScore = azurePhoneme.accuracy ?? 0;
             phonemeIndex = j + 1;
-            console.log(
-              `Matched letter '${letter}' with phoneme '${azurePhoneme.phoneme}' (score: ${letterScore})`
-            );
             break;
           }
         }
@@ -805,9 +667,6 @@ function mapPhonemesToLetters(word, azurePhonemes, overallScore, language = "en-
           letterScore = overallScore + (Math.random() * 20 - 10); // Add some realistic variation
           letterScore = Math.max(0, Math.min(100, letterScore));
         }
-        console.log(
-          `No phoneme match for letter '${letter}', using score: ${letterScore}`
-        );
       }
 
       const status = getStatusFromScore(letterScore);
@@ -826,25 +685,18 @@ function mapPhonemesToLetters(word, azurePhonemes, overallScore, language = "en-
     }
   } else {
     // If Azure phonemes are not useful, generate letter-level scores based on overall score
-    console.log("Azure phonemes not useful, generating letter-level scores");
     return generateLetterLevelScores(word, "", overallScore, language);
   }
 
-  console.log("Final letter phonemes:", letterPhonemes);
   return letterPhonemes;
 }
 
 // New function to generate realistic letter-level pronunciation scores
 function generateLetterLevelScores(word, recognizedText, overallScore, language = "en-US") {
-  console.log(
-    `Generating letter-level scores for "${word}" with overall score ${overallScore} in ${language}`
-  );
-
   const letterPhonemes = [];
 
   // If overallScore is 0 and no recognized text, return all 0s (no audio recorded)
   if (overallScore === 0 && (!recognizedText || recognizedText.trim() === "")) {
-    console.log("No audio recorded - returning all 0 scores");
     const letterToPhoneme = getLanguagePhonemeMapping(language);
     for (let i = 0; i < word.length; i++) {
       const letter = word[i].toLowerCase();
@@ -858,7 +710,6 @@ function generateLetterLevelScores(word, recognizedText, overallScore, language 
         feedback: getPhonemeInteractiveFeedback(phoneme, "Incorrect"),
       });
     }
-    console.log("Generated letter-level scores (all zeros):", letterPhonemes);
     return letterPhonemes;
   }
 
@@ -920,7 +771,6 @@ function generateLetterLevelScores(word, recognizedText, overallScore, language 
     });
   }
 
-  console.log("Generated letter-level scores:", letterPhonemes);
   return letterPhonemes;
 }
 
@@ -981,9 +831,8 @@ function cleanupTempFiles(wavFilePath) {
   if (wavFilePath && fs.existsSync(wavFilePath)) {
     try {
       fs.unlinkSync(wavFilePath);
-      console.log("Cleaned up temporary WAV file");
     } catch (err) {
-      console.warn("Could not delete temporary WAV file:", err.message);
+      // Silent fail
     }
   }
 }
@@ -1008,8 +857,6 @@ function getLanguageVoiceConfig(language) {
 
 // Helper function to create consistent fallback results
 function createFallbackResult(referenceText, audioFilePath, reason, language = "en-US") {
-  console.log(`Creating fallback result due to: ${reason}`);
-
   // Try to determine the correct audio URL (prefer MP3 if available)
   let audioUrl = `/uploads/${path.basename(audioFilePath)}`;
   if (audioFilePath.includes('.webm')) {
@@ -1152,21 +999,21 @@ app.post(
       const voiceName = req.body.voiceName || defaultVoice;
       const speechSpeed = req.body.speechSpeed || "0.7";
 
-      console.log(`Received audio file: ${audioFilePath}`);
-      console.log(`Reference word: ${referenceWord}`);
-      console.log(`Language: ${language}`);
-      console.log(`Voice: ${voiceName}`);
-      console.log(`File type: ${req.file.mimetype}`);
-      console.log(`File size: ${req.file.size} bytes`);
-      console.log(`Include reference audio: ${includeReferenceAudio}`);
-      console.log(`Request body:`, req.body);
+      // Log request body
+      console.log("REQUEST BODY:", JSON.stringify({
+        word: referenceWord,
+        language: language,
+        voiceName: voiceName,
+        speechSpeed: speechSpeed,
+        includeReferenceAudio: includeReferenceAudio,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype
+      }, null, 2));
 
       // Check if audio file is too small (likely no audio recorded)
       // WebM files with no audio are typically less than 1KB
       const MIN_AUDIO_SIZE = 1000; // 1KB minimum
       if (req.file.size < MIN_AUDIO_SIZE) {
-        console.warn(`Audio file too small (${req.file.size} bytes) - likely no audio recorded`);
-        
         // Return 0 scores immediately
         const noAudioResult = {
           word: referenceWord,
@@ -1198,7 +1045,7 @@ app.post(
               };
             }
           } catch (referenceError) {
-            console.error("Error generating reference audio:", referenceError);
+            // Silent error handling
           }
         }
 
@@ -1207,10 +1054,12 @@ app.post(
           try {
             fs.unlinkSync(audioFilePath);
           } catch (err) {
-            console.warn(`Could not delete empty audio file: ${err.message}`);
+            // Silent error handling
           }
         }
 
+        // Log response
+        console.log("RESPONSE:", JSON.stringify(noAudioResult, null, 2));
         return res.json(noAudioResult);
       }
 
@@ -1225,11 +1074,7 @@ app.post(
           const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
           await convertWebMToMp3(audioFilePath, mp3FilePath);
           audioUrl = `/uploads/${path.basename(mp3FilePath)}`;
-
-          // Keep the WebM file for Azure assessment, but use MP3 for playback
-          console.log("MP3 conversion successful, keeping WebM for assessment");
         } catch (conversionError) {
-          console.warn("MP3 conversion failed, using original WebM file:", conversionError.message);
           // Continue with WebM file
         }
 
@@ -1240,15 +1085,33 @@ app.post(
           language
         );
 
+        // Log Azure response
+        console.log("AZURE RESPONSE:", JSON.stringify({
+          word: assessmentResult.word,
+          recognizedText: assessmentResult.recognizedText,
+          pronunciationScore: assessmentResult.pronunciationScore,
+          AccuracyScore: assessmentResult.AccuracyScore,
+          fluencyScore: assessmentResult.fluencyScore,
+          completenessScore: assessmentResult.completenessScore,
+          phonemesCount: assessmentResult.phonemes?.length || 0
+        }, null, 2));
+
         // Update audioUrl
         assessmentResult.audioUrl = audioUrl;
-console.log(assessmentResult.pronunciationScore,"----------------------------------------------------")
-        // Add 25 points boost for en-GB language (capped at 100)
+        
+        // Add 10% boost for en-GB language (capped at 100)
         if (language.toLowerCase() === "en-gb" && assessmentResult.pronunciationScore !==0) {
-          assessmentResult.pronunciationScore = Math.min(100, assessmentResult.pronunciationScore + 25);
-          assessmentResult.AccuracyScore = Math.min(100, assessmentResult.AccuracyScore + 25);
-          assessmentResult.fluencyScore = Math.min(100, assessmentResult.fluencyScore + 25);
-          assessmentResult.completenessScore = Math.min(100, assessmentResult.completenessScore + 25);
+          assessmentResult.pronunciationScore = Math.min(100, Math.round(assessmentResult.pronunciationScore * 1.10));
+          assessmentResult.AccuracyScore = Math.min(100, Math.round(assessmentResult.AccuracyScore * 1.10));
+          assessmentResult.fluencyScore = Math.min(100, Math.round(assessmentResult.fluencyScore * 1.10));
+          assessmentResult.completenessScore = Math.min(100, Math.round(assessmentResult.completenessScore * 1.10));
+        }
+        
+        // Manipulate fluencyScore based on pronunciationScore and AccuracyScore (after boost)
+        if (assessmentResult.pronunciationScore === 100 && assessmentResult.AccuracyScore === 100) {
+          assessmentResult.fluencyScore = 100;
+        } else {
+          assessmentResult.fluencyScore = assessmentResult.AccuracyScore;
         }
 
         // Add contextual feedback message
@@ -1260,8 +1123,6 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
 
         // NEW: Generate reference audio if requested
         if (includeReferenceAudio) {
-          console.log(`Generating reference audio for "${referenceWord}" with voice ${voiceName}`);
-          console.log(`Azure credentials check: Key=${!!process.env.AZURE_SPEECH_KEY}, Region=${process.env.AZURE_SPEECH_REGION}`);
           try {
             const referenceAudioData = await generateReferenceAudio(
               referenceWord,
@@ -1270,7 +1131,6 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
             );
 
             if (referenceAudioData) {
-              console.log(`Reference audio generated successfully, size: ${referenceAudioData.length} bytes`);
               // Convert audio data to base64 for embedding in response
               const base64Audio =
                 Buffer.from(referenceAudioData).toString("base64");
@@ -1280,11 +1140,8 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
                 speed: speechSpeed,
                 text: referenceWord,
               };
-            } else {
-              console.warn("Reference audio generation returned null");
             }
           } catch (referenceError) {
-            console.error("Error generating reference audio:", referenceError);
             // Don't fail the whole request, just add a note
             assessmentResult.referenceAudio = {
               error: "Reference audio generation failed",
@@ -1295,35 +1152,36 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
           }
         }
 
-        console.log("Enhanced assessment result:", {
-          ...assessmentResult,
-          referenceAudio: assessmentResult.referenceAudio
-            ? "included"
-            : "not requested",
-        });
-
         // Clean up WebM file after successful assessment (if MP3 exists)
         const mp3FilePath = audioFilePath.replace('.webm', '.mp3');
         if (fs.existsSync(mp3FilePath) && fs.existsSync(audioFilePath)) {
           fs.unlinkSync(audioFilePath);
-          console.log("Deleted original WebM file after assessment:", audioFilePath);
         }
 
         // Schedule cleanup to run after response is sent, but with longer delay to avoid deleting just-created files
         setTimeout(() => {
-          cleanupBySize(MAX_UPLOAD_SIZE_MB).catch((err) =>
-            console.warn("Cleanup warning:", err.message)
-          );
+          cleanupBySize(MAX_UPLOAD_SIZE_MB).catch((err) => {
+            // Silent error handling
+          });
         }, 5000); // Run cleanup 5 seconds after response is sent to avoid deleting the current file
+
+        // Log final response
+        console.log("RESPONSE:", JSON.stringify({
+          word: assessmentResult.word,
+          recognizedText: assessmentResult.recognizedText,
+          pronunciationScore: assessmentResult.pronunciationScore,
+          AccuracyScore: assessmentResult.AccuracyScore,
+          fluencyScore: assessmentResult.fluencyScore,
+          completenessScore: assessmentResult.completenessScore,
+          phonemesCount: assessmentResult.phonemes?.length || 0,
+          audioUrl: assessmentResult.audioUrl,
+          hasReferenceAudio: !!assessmentResult.referenceAudio,
+          feedbackMessage: assessmentResult.feedbackMessage
+        }, null, 2));
 
         // Return the enhanced assessment results
         res.json(assessmentResult);
       } catch (processingError) {
-        console.error(
-          "Error during pronunciation assessment:",
-          processingError
-        );
-
         // Try to convert WebM to MP3 for fallback result, but use WebM if conversion fails
         let fallbackAudioUrl = `/uploads/${path.basename(audioFilePath)}`;
         try {
@@ -1336,7 +1194,6 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
             fs.unlinkSync(audioFilePath);
           }
         } catch (conversionError) {
-          console.warn("Failed to convert to MP3 in fallback, using WebM:", conversionError.message);
           // Continue with WebM file
         }
 
@@ -1373,10 +1230,6 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
               };
             }
           } catch (referenceError) {
-            console.error(
-              "Error generating fallback reference audio:",
-              referenceError
-            );
             fallbackResult.referenceAudio = {
               error: "Reference audio generation failed",
               fallbackUrl: `/api/reference-audio/${encodeURIComponent(
@@ -1386,17 +1239,17 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
           }
         }
 
+        // Log fallback response
+        console.log("RESPONSE (FALLBACK):", JSON.stringify(fallbackResult, null, 2));
         res.json(fallbackResult);
       }
     } catch (error) {
-      console.error("Error processing pronunciation assessment:", error);
-
       // Cleanup file if it exists
       if (audioFilePath && fs.existsSync(audioFilePath)) {
         try {
           fs.unlinkSync(audioFilePath);
         } catch (err) {
-          console.warn(`Warning: Could not delete audio file: ${err.message}`);
+          // Silent error handling
         }
       }
 
@@ -1414,7 +1267,6 @@ async function generateReferenceAudio(
   voiceName = "en-US-JennyNeural",
   speed = "1.0"
 ) {
-  console.log(`generateReferenceAudio called with: text="${text}", voice="${voiceName}", speed="${speed}"`);
   return new Promise((resolve, reject) => {
     try {
       // Create speech config
@@ -1442,12 +1294,9 @@ async function generateReferenceAudio(
         </speak>
       `;
 
-      console.log(`Generated SSML: ${ssml}`);
-
       synthesizer.speakSsmlAsync(
         ssml,
         (result) => {
-          console.log(`Speech synthesis result reason: ${result.reason}`);
           if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
             // Get audio data - Azure SDK returns it as ArrayBuffer
             let audioData = null;
@@ -1464,32 +1313,22 @@ async function generateReferenceAudio(
               }
             }
             
-            console.log(`Speech synthesis completed, audio data length: ${audioData ? audioData.length : 'undefined'} bytes`);
-            
             if (audioData && audioData.length > 0) {
               resolve(audioData);
             } else {
-              console.warn("Audio data is empty or undefined. Result keys:", Object.keys(result));
               resolve(null);
             }
-          } else if (result.reason === sdk.ResultReason.Canceled) {
-            const cancellation = sdk.CancellationDetails.fromResult(result);
-            console.error("Speech synthesis canceled:", cancellation.reason, cancellation.errorDetails);
-            resolve(null);
           } else {
-            console.error("Speech synthesis failed with reason:", result.reason);
             resolve(null);
           }
           synthesizer.close();
         },
         (error) => {
-          console.error("Speech synthesis error:", error);
           synthesizer.close();
           resolve(null);
         }
       );
     } catch (error) {
-      console.error("Error in generateReferenceAudio:", error);
       resolve(null);
     }
   });
