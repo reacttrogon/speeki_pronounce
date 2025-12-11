@@ -8,7 +8,11 @@ const { v4: uuidv4 } = require("uuid");
 const sdk = require("microsoft-cognitiveservices-speech-sdk");
 const dotenv = require("dotenv");
 const ffmpeg = require("fluent-ffmpeg"); // Add this package
+const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg"); // Add ffmpeg installer
 const cors = require("cors"); // Add this import
+
+// Set ffmpeg path from the installer package
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 // Load environment variables from .env file
 dotenv.config();
@@ -316,18 +320,39 @@ function convertWebMToWav(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
     console.log(`Converting ${inputPath} to WAV for Azure processing`);
 
+    // Check if input file exists
+    if (!fs.existsSync(inputPath)) {
+      return reject(new Error(`Input file does not exist: ${inputPath}`));
+    }
+
     ffmpeg(inputPath)
       .toFormat("wav")
       .audioCodec("pcm_s16le")
       .audioFrequency(16000)
       .audioChannels(1)
+      .on("start", (commandLine) => {
+        console.log("FFmpeg command:", commandLine);
+      })
       .on("end", () => {
         console.log("WAV conversion completed successfully");
-        resolve(outputPath);
+        // Verify output file was created
+        if (fs.existsSync(outputPath)) {
+          const stats = fs.statSync(outputPath);
+          console.log(`WAV file created: ${outputPath} (${stats.size} bytes)`);
+          resolve(outputPath);
+        } else {
+          reject(new Error("WAV file was not created"));
+        }
       })
       .on("error", (err) => {
-        console.error("WAV conversion failed:", err);
+        console.error("WAV conversion failed:", err.message);
         reject(err);
+      })
+      .on("stderr", (stderrLine) => {
+        // Log ffmpeg stderr for debugging
+        if (stderrLine.includes("error") || stderrLine.includes("Error")) {
+          console.error("FFmpeg stderr:", stderrLine);
+        }
       })
       .save(outputPath);
   });
@@ -338,19 +363,40 @@ function convertWebMToMp3(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
     console.log(`Converting ${inputPath} to MP3 for storage`);
 
+    // Check if input file exists
+    if (!fs.existsSync(inputPath)) {
+      return reject(new Error(`Input file does not exist: ${inputPath}`));
+    }
+
     ffmpeg(inputPath)
       .toFormat("mp3")
       .audioCodec("libmp3lame")
       .audioFrequency(16000)
       .audioChannels(1)
       .audioBitrate(128)
+      .on("start", (commandLine) => {
+        console.log("FFmpeg command:", commandLine);
+      })
       .on("end", () => {
         console.log("MP3 conversion completed successfully");
-        resolve(outputPath);
+        // Verify output file was created
+        if (fs.existsSync(outputPath)) {
+          const stats = fs.statSync(outputPath);
+          console.log(`MP3 file created: ${outputPath} (${stats.size} bytes)`);
+          resolve(outputPath);
+        } else {
+          reject(new Error("MP3 file was not created"));
+        }
       })
       .on("error", (err) => {
-        console.error("MP3 conversion failed:", err);
+        console.error("MP3 conversion failed:", err.message);
         reject(err);
+      })
+      .on("stderr", (stderrLine) => {
+        // Log ffmpeg stderr for debugging
+        if (stderrLine.includes("error") || stderrLine.includes("Error")) {
+          console.error("FFmpeg stderr:", stderrLine);
+        }
       })
       .save(outputPath);
   });
@@ -595,10 +641,10 @@ async function assessPronunciation(audioFilePath, referenceText, language = "en-
             processedResult.phonemes = generateLetterLevelScores(
               referenceText,
               "",
-              25,
+              0,
               language
             );
-            processedResult.pronunciationScore = 25;
+            processedResult.pronunciationScore = 0;
           }
 
           recognizer.close();
@@ -950,8 +996,8 @@ function createFallbackResult(referenceText, audioFilePath, reason, language = "
   return {
     word: referenceText,
     recognizedText: "",
-    phonemes: generateLetterLevelScores(referenceText, "", 25, language),
-    pronunciationScore: 25,
+    phonemes: generateLetterLevelScores(referenceText, "", 0, language),
+    pronunciationScore: 0,
     AccuracyScore: 0,
     fluencyScore: 0,
     completenessScore: 0,
@@ -1117,9 +1163,9 @@ app.post(
 
         // Update audioUrl
         assessmentResult.audioUrl = audioUrl;
-
+console.log(assessmentResult.pronunciationScore,"----------------------------------------------------")
         // Add 25 points boost for en-GB language (capped at 100)
-        if (language.toLowerCase() === "en-gb") {
+        if (language.toLowerCase() === "en-gb" && assessmentResult.pronunciationScore !==0) {
           assessmentResult.pronunciationScore = Math.min(100, assessmentResult.pronunciationScore + 25);
           assessmentResult.AccuracyScore = Math.min(100, assessmentResult.AccuracyScore + 25);
           assessmentResult.fluencyScore = Math.min(100, assessmentResult.fluencyScore + 25);
@@ -1324,10 +1370,35 @@ async function generateReferenceAudio(
         (result) => {
           console.log(`Speech synthesis result reason: ${result.reason}`);
           if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
-            console.log(`Speech synthesis completed, audio data length: ${result.audioData ? result.audioData.length : 'null'}`);
-            resolve(result.audioData);
+            // Get audio data - Azure SDK returns it as ArrayBuffer
+            let audioData = null;
+            
+            if (result.audioData) {
+              // Convert ArrayBuffer to Buffer
+              if (result.audioData instanceof ArrayBuffer) {
+                audioData = Buffer.from(result.audioData);
+              } else if (Buffer.isBuffer(result.audioData)) {
+                audioData = result.audioData;
+              } else {
+                // Try to convert if it's a Uint8Array or similar
+                audioData = Buffer.from(result.audioData);
+              }
+            }
+            
+            console.log(`Speech synthesis completed, audio data length: ${audioData ? audioData.length : 'undefined'} bytes`);
+            
+            if (audioData && audioData.length > 0) {
+              resolve(audioData);
+            } else {
+              console.warn("Audio data is empty or undefined. Result keys:", Object.keys(result));
+              resolve(null);
+            }
+          } else if (result.reason === sdk.ResultReason.Canceled) {
+            const cancellation = sdk.CancellationDetails.fromResult(result);
+            console.error("Speech synthesis canceled:", cancellation.reason, cancellation.errorDetails);
+            resolve(null);
           } else {
-            console.error("Speech synthesis failed:", result.reason);
+            console.error("Speech synthesis failed with reason:", result.reason);
             resolve(null);
           }
           synthesizer.close();

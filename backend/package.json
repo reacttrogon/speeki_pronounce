@@ -13,6 +13,7 @@
     "docker:run": "docker run -p 8080:3000 --env-file .env pronunciation-backend"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
@@ -28,7 +29,12 @@
     "type": "git",
     "url": "git+https://github.com/trogon-php/pronounciation_node_2.git"
   },
-  "keywords": ["pronunciation", "speech", "azure", "nodejs"],
+  "keywords": [
+    "pronunciation",
+    "speech",
+    "azure",
+    "nodejs"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
