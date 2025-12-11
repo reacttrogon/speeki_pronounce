@@ -1,6 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
 import { AssessmentContext } from "../context/AssessmentContext.jsx"; // adjust path
 import PronunciationTrainer from "./PronunciationTrainer.jsx";
+import { CircleAlert } from "lucide-react";
 
 const Feedback = () => {
   const { assessmentResult, setAssessmentResult, nextWord, setStatusMessage, language } =
@@ -142,12 +143,13 @@ const Feedback = () => {
         <div className="border-t border-dashed border-[#a40dee] my-3 w-full" />
 
         {/* Word */}
-        <div className="colored-word text-center text-[26px] font-bold text-[#C03535] cursor-pointer" onClick={() => setShowTrainer(true)}>
+        <div className="colored-word text-center text-[26px] font-bold text-[#C03535] cursor-pointer flex justify-center items-start gap-2" onClick={() => setShowTrainer(true)}>
           {/* {assessmentResult?.word} */}
           <ColoredWord
             word={assessmentResult?.word}
             results={assessmentResult?.phonemes}
           />
+          <CircleAlert onClick={() => setShowTrainer(true)} className="w-5 h-5 text-gray-400"/>
         </div>
 
         {/* Audio Controls */}
