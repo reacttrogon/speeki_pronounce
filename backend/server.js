@@ -797,9 +797,14 @@ function mapPhonemesToLetters(word, azurePhonemes, overallScore, language = "en-
       }
 
       // If no exact match found, use overall score with some variation
+      // But if overallScore is 0 and no recognized text, keep it at 0
       if (!bestMatch) {
-        letterScore = overallScore + (Math.random() * 20 - 10); // Add some realistic variation
-        letterScore = Math.max(0, Math.min(100, letterScore));
+        if (overallScore === 0) {
+          letterScore = 0;
+        } else {
+          letterScore = overallScore + (Math.random() * 20 - 10); // Add some realistic variation
+          letterScore = Math.max(0, Math.min(100, letterScore));
+        }
         console.log(
           `No phoneme match for letter '${letter}', using score: ${letterScore}`
         );
@@ -837,9 +842,30 @@ function generateLetterLevelScores(word, recognizedText, overallScore, language 
 
   const letterPhonemes = [];
 
+  // If overallScore is 0 and no recognized text, return all 0s (no audio recorded)
+  if (overallScore === 0 && (!recognizedText || recognizedText.trim() === "")) {
+    console.log("No audio recorded - returning all 0 scores");
+    const letterToPhoneme = getLanguagePhonemeMapping(language);
+    for (let i = 0; i < word.length; i++) {
+      const letter = word[i].toLowerCase();
+      const phonemeOptions = letterToPhoneme[letter] || ["/ə/"];
+      const phoneme = phonemeOptions[0];
+      letterPhonemes.push({
+        phoneme: phoneme,
+        letterPosition: i,
+        AccuracyScore: 0,
+        status: "Incorrect",
+        feedback: getPhonemeInteractiveFeedback(phoneme, "Incorrect"),
+      });
+    }
+    console.log("Generated letter-level scores (all zeros):", letterPhonemes);
+    return letterPhonemes;
+  }
+
   // Get language-specific phoneme mapping
   const letterToPhoneme = getLanguagePhonemeMapping(language);
-  const baseScore = overallScore || 50;
+  // Only use default 50 if overallScore is undefined/null, not if it's explicitly 0
+  const baseScore = (overallScore !== undefined && overallScore !== null) ? overallScore : 50;
 
   // Calculate text similarity if we have recognized text
   let textSimilarity = 0.7; // Default
@@ -1135,6 +1161,59 @@ app.post(
       console.log(`Include reference audio: ${includeReferenceAudio}`);
       console.log(`Request body:`, req.body);
 
+      // Check if audio file is too small (likely no audio recorded)
+      // WebM files with no audio are typically less than 1KB
+      const MIN_AUDIO_SIZE = 1000; // 1KB minimum
+      if (req.file.size < MIN_AUDIO_SIZE) {
+        console.warn(`Audio file too small (${req.file.size} bytes) - likely no audio recorded`);
+        
+        // Return 0 scores immediately
+        const noAudioResult = {
+          word: referenceWord,
+          recognizedText: "",
+          phonemes: generateLetterLevelScores(referenceWord, "", 0, language),
+          pronunciationScore: 0,
+          AccuracyScore: 0,
+          fluencyScore: 0,
+          completenessScore: 0,
+          audioUrl: `/uploads/${path.basename(audioFilePath)}`,
+          feedbackMessage: "No audio detected. Please try recording again.",
+        };
+
+        // Generate reference audio if requested
+        if (includeReferenceAudio) {
+          try {
+            const referenceAudioData = await generateReferenceAudio(
+              referenceWord,
+              voiceName,
+              speechSpeed
+            );
+            if (referenceAudioData) {
+              const base64Audio = Buffer.from(referenceAudioData).toString("base64");
+              noAudioResult.referenceAudio = {
+                data: `data:audio/mpeg;base64,${base64Audio}`,
+                voiceName: voiceName,
+                speed: speechSpeed,
+                text: referenceWord,
+              };
+            }
+          } catch (referenceError) {
+            console.error("Error generating reference audio:", referenceError);
+          }
+        }
+
+        // Clean up the empty file
+        if (fs.existsSync(audioFilePath)) {
+          try {
+            fs.unlinkSync(audioFilePath);
+          } catch (err) {
+            console.warn(`Could not delete empty audio file: ${err.message}`);
+          }
+        }
+
+        return res.json(noAudioResult);
+      }
+
       try {
         let finalAudioPath = audioFilePath;
         let audioUrl = `/uploads/${path.basename(audioFilePath)}`;
@@ -1261,12 +1340,12 @@ console.log(assessmentResult.pronunciationScore,"-------------------------------
           // Continue with WebM file
         }
 
-        // Provide enhanced fallback result
+        // Provide enhanced fallback result - use 0 scores when no audio is recorded
         const fallbackResult = {
           word: referenceWord,
           recognizedText: "",
-          phonemes: generateLetterLevelScores(referenceWord, "", 25, language),
-          pronunciationScore: 25,
+          phonemes: generateLetterLevelScores(referenceWord, "", 0, language),
+          pronunciationScore: 0,
           AccuracyScore: 0,
           fluencyScore: 0,
           completenessScore: 0,

@@ -177,7 +177,8 @@ const Feedback = () => {
             <span className="font-bold text-black">
               Accuracy : {(() => {
                 const avgAccuracy = Math.round(assessmentResult.phonemes.reduce((acc, phoneme) => acc + phoneme.AccuracyScore, 0) / assessmentResult.phonemes.length);
-                const boostedAccuracy = language?.toLowerCase() === "en-gb" ? Math.min(100, avgAccuracy + 25) : avgAccuracy;
+                // Only boost if accuracy is not 0 (no audio recorded)
+                const boostedAccuracy = (language?.toLowerCase() === "en-gb" && avgAccuracy !== 0) ? Math.min(100, avgAccuracy + 25) : avgAccuracy;
                 return boostedAccuracy;
               })()}%
             </span>
