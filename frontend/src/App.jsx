@@ -3,12 +3,23 @@ import WordCard from "./components/WordCard";
 import MicButton from "./components/MicButton";
 import Feedback from "./components/Feedback";
 import AppTour from "./components/AppTour";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AssessmentContext } from "./context/AssessmentContext.jsx";
+import { addPronounceProgress } from "./config/api.js";
 
 function App() {
   const { assessmentResult, setAssessmentResult, nextWord, isValidSession, token } =
     useContext(AssessmentContext);
+
+  useEffect(() => {
+    if (!token) return;
+    
+    const interval = setInterval(() => {
+      addPronounceProgress(token, 20);
+    }, 20000); // 20 seconds
+
+    return () => clearInterval(interval); // Cleanup
+  }, [token]);
 
   const isBlur = assessmentResult !== null && assessmentResult !== undefined;
 

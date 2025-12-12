@@ -24,10 +24,10 @@ export const validateToken = (token) => {
   if (!token) return false;
   
   // Basic token validation - should be a non-empty string with reasonable length
-  // You can enhance this with more sophisticated validation as needed
+  // Accepts JWT tokens (Base64 URL-safe characters: a-z, A-Z, 0-9, ., _, -, =)
   return typeof token === 'string' && 
          token.length >= 10 &&
-         /^[a-zA-Z0-9._-]+$/.test(token);
+         /^[a-zA-Z0-9._\-=]+$/.test(token);
 };
 
 /**
