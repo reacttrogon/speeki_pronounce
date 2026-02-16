@@ -10,7 +10,7 @@ export default {
         inter: ["Inter", "sans-serif"],
       },
       backgroundImage: {
-        retro: "url('/speeki_pronounce/images/Retro_baground.png')", // Fixed path for production
+        retro: "url('/images/Retro_baground.png')", // Fixed path for production
       },
       animation: {
         "pulse-custom": "pulse 1.5s infinite",

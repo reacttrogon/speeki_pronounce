@@ -3,7 +3,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: '/speeki_pronounce/', 
   plugins: [react()],
   // ADD THIS: Ensure assets are copied correctly
   assetsInclude: ['**/*.otf', '**/*.woff', '**/*.woff2', '**/*.ttf'],

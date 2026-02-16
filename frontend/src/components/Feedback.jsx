@@ -152,13 +152,13 @@ const Feedback = () => {
         {/* Audio Controls */}
         <div className="flex items-center justify-center gap-4 mt-2 ">
           <img
-            src="/speeki_pronounce/images/speaker-filled-audio-tool.png"
+            src="/images/speaker-filled-audio-tool.png"
             alt="Play Audio"
             className="w-10 h-10 cursor-pointer"
             onClick={handlePlayReferenceAudio}
           />
           <img
-            src="/speeki_pronounce/images/hearing.png"
+            src="/images/hearing.png"
             alt="Play Reference Audio"
             className="w-10 h-10 cursor-pointer tr6ansition-opacity hover:opacity-80"
             title="Play reference pronunciation"
@@ -174,7 +174,7 @@ const Feedback = () => {
             </span> */}
 
             <span className="font-bold text-black">
-              Accuracy : {assessmentResult.AccuracyScore}%
+              Pronunciation : {assessmentResult.pronunciationScore}%
             </span>
           </p>
           <p className="mt-1 text-xs text-gray-600">
@@ -186,8 +186,8 @@ const Feedback = () => {
         <div className="grid grid-cols-1 gap-2 mt-5 text-sm ">
           {[
             {
-              label: "Pronunciation",
-              value: assessmentResult.pronunciationScore,
+              label: "Accuracy",
+              value: assessmentResult.AccuracyScore,
             },
             { label: "Fluency", value: assessmentResult.fluencyScore },
             { label: "Completeness", value: assessmentResult.completenessScore },

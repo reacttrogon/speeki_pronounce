@@ -3,7 +3,7 @@ import { Volume2, Headphones, X } from 'lucide-react';
 
 const PronunciationTrainer = ({ assessmentResult, onClose }) => {
   // Use backend AccuracyScore directly
-  const currentProgress = assessmentResult?.AccuracyScore || 0;
+  const currentProgress = assessmentResult?.pronunciationScore || 0;
   
   // Convert assessment result phonemes to exercises format
   const exercises = assessmentResult?.phonemes?.map(phoneme => {

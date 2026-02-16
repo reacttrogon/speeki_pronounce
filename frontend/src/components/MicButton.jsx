@@ -105,21 +105,29 @@ const MicButton = ({ onAssessmentComplete }) => {
 
   return (
     <div className={`mic-button-component relative z-10 flex flex-col justify-center w-full mt-6 `}>
-      {statusMessage && (
+      {recording ? (
+        <div className="flex items-center justify-center gap-1.5 mb-3">
+          <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+          <span className="text-red-600 text-xs font-medium">Recording...</span>
+        </div>
+      ) : statusMessage ? (
         <p className="text-center status-message text-muted mb-3 text-[10px] text-[#8B8585] ">
           {statusMessage}
         </p>
-      )}
+      ) : null}
 
       <div className="flex justify-center">
         <button
           onClick={handleRecordClick}
-          className={`bg-red-300 border-0 rounded-full  w-16 h-16  items-center justify-center transition-transform duration-150 ease-in-out active:scale-90 ${
-            recording ? "ring-8 ring-[rgba(164,13,238,0.2)] animate-pulse" : ""
-          }`}
+          className={`border-0 rounded-full w-16 h-16 flex items-center justify-center transition-transform duration-150 ease-in-out active:scale-90 ${recording ? "bg-[#950CD8] ring-8 ring-[rgba(164,13,238,0.2)] animate-pulse" : "bg-transparent"
+            }`}
           tabIndex={0}
         >
-          <img src="/speeki_pronounce/images/mic.png" alt="Mic Button" className="w-16 h-16" />
+          {recording ? (
+            <div className="w-6 h-6 bg-red-500 rounded" />
+          ) : (
+            <img src="/images/mic.png" alt="Mic Button" className="w-16 h-16" />
+          )}
         </button>
       </div>
     </div>
